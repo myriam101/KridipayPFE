@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\PriceWaterRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use App\Entity\Enum\TrancheEau;
 
 
 #[ORM\Entity(repositoryClass: PriceWaterRepository::class)]

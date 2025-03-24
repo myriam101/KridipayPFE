@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\EnergyBillRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use App\Entity\Enum\BillCategory;
 
 #[ORM\Entity(repositoryClass: EnergyBillRepository::class)]
 class EnergyBill

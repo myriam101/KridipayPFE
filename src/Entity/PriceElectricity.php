@@ -2,11 +2,14 @@
 
 namespace App\Entity;
 
-use App\Enum\Sector;
-use App\Enum\TrancheElect;
 use App\Repository\PriceElectricityRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use App\Entity\Enum\PeriodeUse;
+use App\Entity\Enum\Sector;
+use App\Entity\Enum\TrancheElect;
+
+
 
 #[ORM\Entity(repositoryClass: PriceElectricityRepository::class)]
 class PriceElectricity

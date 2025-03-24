@@ -53,10 +53,6 @@ class Product
     #[ORM\OneToOne(targetEntity: Feature::class, mappedBy: "product", cascade: ["remove"])]
     private ?Feature $feature = null;
 
-    // One product can appear in many cart containers
-    #[ORM\OneToMany(mappedBy: 'product', targetEntity: CartContainer::class)]
-    private iterable $cartContainers;
-
     public function getId(): ?int
     {
         return $this->id;

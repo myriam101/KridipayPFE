@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\BonifPointRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Enum\Typepoint;
 
 #[ORM\Entity(repositoryClass: BonifPointRepository::class)]
 class BonifPoint
@@ -27,6 +28,9 @@ class BonifPoint
     #[ORM\JoinColumn(name: 'id_client', referencedColumnName: 'id',nullable: true)]
     private ?Client $id_client =  null;
  
+    #[ORM\Column(type: Types::STRING, enumType: Typepoint::class)] 
+    private Typepoint $type_point;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -76,6 +80,16 @@ class BonifPoint
     {
         $this->id_client = $id_client;
 
+        return $this;
+    }
+    public function getTypePoint(): Typepoint
+    {
+        return $this->type_point;
+    }
+
+    public function setTypePoint(Typepoint $type_point): self
+    {
+        $this->type_point = $type_point;
         return $this;
     }
 }

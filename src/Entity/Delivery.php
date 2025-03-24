@@ -5,6 +5,9 @@ namespace App\Entity;
 use App\Repository\DeliveryRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use App\Entity\Enum\Modeliv;
+use App\Entity\Enum\ClientRide;
+
 
 #[ORM\Entity(repositoryClass: DeliveryRepository::class)]
 class Delivery

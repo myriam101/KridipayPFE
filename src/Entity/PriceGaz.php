@@ -2,10 +2,10 @@
 
 namespace App\Entity;
 
-use App\Enum\TrancheGaz;
 use App\Repository\PriceGazRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use App\Entity\Enum\TrancheGaz;
 
 #[ORM\Entity(repositoryClass: PriceGazRepository::class)]
 class PriceGaz

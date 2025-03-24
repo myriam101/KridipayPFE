@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\FeatureRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Enum\EnergyClass;
+use App\Entity\Enum\Type;
 
 #[ORM\Entity(repositoryClass: FeatureRepository::class)]
 class Feature
@@ -56,8 +58,9 @@ class Feature
     #[ORM\Column]
     private ?float $scop = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $cycle_duration = null;
+    
+    #[ORM\Column]
+    private ?int $cycle_duration = null;
 
     #[ORM\Column]
     private ?int $nbr_couvert = null;
@@ -276,12 +279,12 @@ class Feature
         return $this;
     }
 
-    public function getCycleDuration(): ?\DateTimeInterface
+    public function getCycleDuration(): ?int
     {
         return $this->cycle_duration;
     }
 
-    public function setCycleDuration(\DateTimeInterface $cycle_duration): static
+    public function setCycleDuration(int $cycle_duration): static
     {
         $this->cycle_duration = $cycle_duration;
 

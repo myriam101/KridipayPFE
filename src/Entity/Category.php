@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CategoryRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Enum\Designation;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category
