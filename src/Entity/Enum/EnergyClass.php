@@ -11,4 +11,5 @@ enum EnergyClass: string
     case E = 'E';
     case F = 'F';
     case G = 'G';
+    case NONE = "none";
 }

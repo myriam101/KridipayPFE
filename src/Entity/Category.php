@@ -22,7 +22,7 @@ class Category
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: Types::STRING, enumType: Designation::class)] 
+    #[ORM\Column(type: Types::INTEGER, enumType: Designation::class)] 
     private Designation $designation;
 
     

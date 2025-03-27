@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Enum\Badge;
 use App\Repository\CarbonRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -23,9 +24,11 @@ class Carbon
     #[ORM\Column]
     private ?float $value = null;
 
-    
     #[ORM\Column]
     private ?bool $visible = null;
+
+    #[ORM\Column(type: Types::INTEGER, enumType: Badge::class)] 
+    private Badge $badge;
 
     #[ORM\OneToOne(targetEntity: Product::class, inversedBy: "carbon")]
     #[ORM\JoinColumn(name: "id_product", referencedColumnName: "id", nullable: false)]
@@ -92,6 +95,16 @@ class Carbon
     {
         $this->visible = $visible;
 
+        return $this;
+    }
+    public function getBadge(): Badge
+    {
+        return $this->badge;
+    }
+
+    public function setBadge(Badge $badge): self
+    {
+        $this->badge = $badge;
         return $this;
     }
 }

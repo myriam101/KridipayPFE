@@ -62,10 +62,6 @@ class AppFixtures extends Fixture
 
         $manager->persist($category);
 
-
-
-        // Set other Feature fields...
-
         // Associate the feature with the product
         $product->setFeature($feature);
         $product->setIdCategory($category);
