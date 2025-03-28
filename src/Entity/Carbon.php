@@ -25,6 +25,9 @@ class Carbon
     private ?float $value = null;
 
     #[ORM\Column]
+    private ?float $factor = null;
+
+    #[ORM\Column]
     private ?bool $visible = null;
 
     #[ORM\Column(type: Types::INTEGER, enumType: Badge::class)] 
@@ -86,6 +89,18 @@ class Carbon
 
         return $this;
     }
+    public function getFactor(): ?float
+    {
+        return $this->value;
+    }
+
+    public function setFactor(float $factor): static
+    {
+        $this->factor = $factor;
+
+        return $this;
+    }
+    
     public function isVisible(): ?bool
     {
         return $this->visible;

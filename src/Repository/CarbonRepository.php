@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Carbon;
+use App\Entity\Enum\Badge;
 use App\Entity\Feature;
 use App\Entity\Product;
 use App\Entity\Enum\Designation;
@@ -28,9 +29,10 @@ class CarbonRepository extends ServiceEntityRepository
         $carbon->setProduct($product);
         $carbon->setValue($value);
         $carbon->setVisible($visible);
+        $carbon->setFactor(0.58);
+        $carbon->setBadge(Badge::NON_DEFINI);
         $carbon->setDateAdd(new \DateTime());
         $carbon->setDateUpdate(new \DateTime());
-
         // Persist and flush
         $entityManager->persist($carbon);
         $entityManager->flush();
@@ -100,8 +102,6 @@ class CarbonRepository extends ServiceEntityRepository
     }
 }
 
-
-
 public function save(Carbon $entity, bool $flush = false): void
 {
     $this->getEntityManager()->persist($entity);
@@ -131,6 +131,34 @@ public function setAllCarbonVisibleToOne()
         ->setParameter('visible', 1);
 
     $qb->getQuery()->execute();
+}
+
+ 
+// Méthode pour calculer l'impact carbone d'un produit en prenant l'ID du produit
+public function calculateCarbonImpactByProductId(int $productId): float
+{
+    $product = $this->getEntityManager()->getRepository(Product::class)->find($productId);
+
+    if (!$product) {
+        return 0; 
+    }
+    $feature = $product->getFeature();
+
+    if (!$feature) {
+        return 0; 
+    }
+
+    $carbon = $this->findOneBy(['product' => $product]);
+
+    $facteurEmission = 0.58;
+
+    $consommationAnnuelle = $feature->getConsumptionWatt();
+
+
+    // Calcul de l'impact carbone
+    $impactEnergie = $consommationAnnuelle * $facteurEmission;
+
+    return $impactEnergie;
 }
 
     //    /**
