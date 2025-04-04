@@ -97,7 +97,25 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    public function addBonusPointToProduct(int $productId, int $points): bool
+{
+    $product = $this->find($productId);
 
+    if (!$product) {
+        return false; // Produit non trouvé
+    }
+
+    // Ajouter les points à ceux existants
+    $currentPoints = $product->getBonifpoint() ?? 0;
+    $product->setBonifpoint($currentPoints + $points);
+
+    $this->_em->persist($product);
+    $this->_em->flush();
+
+    return true;
+}
+
+    
     //    /**
     //     * @return Product[] Returns an array of Product objects
     //     */

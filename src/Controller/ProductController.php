@@ -69,7 +69,32 @@ public function addProduct(Request $request, CategoryRepository $categoryReposit
     return new Response('Product added successfully');
 
 }
+//** update or add bonus point to a specified product */
+#[Route('/product/update-bonif', name: 'product_update_bonif', methods: ['PUT'])]
+public function updateBonif(Request $request, ProductRepository $productRepository, EntityManagerInterface $em): Response
+{
+    $productId = $request->headers->get('product_id');
+    $data = json_decode($request->getContent(), true);
+    $points = $data['bonifpoint'] ?? null;
 
-    
-    
+    if (!$productId || $points === null) {
+        return new Response('Missing product_id or points', 400);
+    }
+
+    $product = $productRepository->find($productId);
+
+    if (!$product) {
+        return new Response('Product not found', 404);
+    }
+
+    $product->setBonifpoint((int) $points);
+    $em->persist($product);
+    $em->flush();
+
+    return new Response("Bonification points updated to $points for product ID $productId", 200);
+}
+
+
+
+
 }
