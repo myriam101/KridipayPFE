@@ -17,6 +17,9 @@ class Client
     #[ORM\Column(type: Types::TEXT)]
     private ?string $adress = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $totalBonifPts = 0;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -30,6 +33,17 @@ class Client
     public function setAdress(string $adress): static
     {
         $this->adress = $adress;
+
+        return $this;
+    }
+    public function getTotalBonifPts(): ?string
+    {
+        return $this->totalBonifPts;
+    }
+
+    public function setTotalBonifPts(string $totalBonifPts): static
+    {
+        $this->totalBonifPts = $totalBonifPts;
 
         return $this;
     }

@@ -12,6 +12,8 @@ use Psr\Log\LoggerInterface;
 use App\Entity\Carbon;
 use App\Entity\Enum\Badge;
 
+#[Route('/carbon')]
+
 class CarbonController extends AbstractController
 {
     private LoggerInterface $logger;
@@ -27,7 +29,7 @@ class CarbonController extends AbstractController
     }
 
     //displays the carbon only if visible set to 1
-    #[Route('/carbon/{productId}', name: 'app_carbon_get', methods: ['GET'])]
+    #[Route('/{productId}', name: 'app_carbon_get', methods: ['GET'])]
     public function getCarbon(string $productId, CarbonRepository $carbonRepository, ProductRepository $productRepository): Response
     {
         $product = $productRepository->find((int) $productId); // Convert to integer
@@ -56,7 +58,7 @@ class CarbonController extends AbstractController
     }
     
 //adds carbon to a specified product , par defaut visible manual add
-#[Route('/carbon/add', name: 'app_carbon_add', methods: ['POST'])]
+#[Route('/add', name: 'app_carbon_add', methods: ['POST'])]
 public function addCarbon(Request $request, CarbonRepository $carbonRepository, ProductRepository $productRepository): Response
 {
     $productId = $request->headers->get('product_id');
@@ -86,7 +88,7 @@ public function addCarbon(Request $request, CarbonRepository $carbonRepository, 
     ]);
 }
 //automatique calcul add
-#[Route('/carbon/add2', name: 'app_carbon_add2', methods: ['POST'])]
+#[Route('/add2', name: 'app_carbon_add2', methods: ['POST'])]
 public function addCarbon2(Request $request, CarbonRepository $carbonRepository, ProductRepository $productRepository): Response
 {
     $productId = $request->headers->get('product_id');
@@ -124,7 +126,7 @@ public function addCarbon2(Request $request, CarbonRepository $carbonRepository,
 }
 
 // updates carbon value of specified product
-#[Route('/carbon/update', name: 'app_carbon_update', methods: ['PUT'])]
+#[Route('/update', name: 'app_carbon_update', methods: ['PUT'])]
 public function updateCarbon(Request $request, CarbonRepository $carbonRepository, ProductRepository $productRepository, EntityManagerInterface $entityManager): Response
 {
     $productId = $request->headers->get('product_id');
@@ -167,7 +169,7 @@ public function updateCarbon(Request $request, CarbonRepository $carbonRepositor
     ]);
 }
 
-#[Route('/carbon/update2', name: 'app_carbon_update2', methods: ['PUT'])]
+#[Route('/update2', name: 'app_carbon_update2', methods: ['PUT'])]
 public function updateCarbon2(
     Request $request,
     CarbonRepository $carbonRepository,
@@ -221,20 +223,20 @@ public function updateCarbon2(
 }
 
 
-#[Route('/carbon/notvisible', name: 'app_carbon_set_all_visible_zero', methods: ['POST'])]
+#[Route('/notvisible', name: 'app_carbon_set_all_visible_zero', methods: ['POST'])]
 public function setAllCarbonVisibleToZero(CarbonRepository $carbonRepository): Response
 {
     $carbonRepository->setAllCarbonVisibleToZero();
     return new Response('All carbon footprints visible values have been set to 0');
 }
-#[Route('/carbon/visible', name: 'app_carbon_set_all_visible_one', methods: ['POST'])]
+#[Route('/visible', name: 'app_carbon_set_all_visible_one', methods: ['POST'])]
 public function setAllCarbonVisibleToOne(CarbonRepository $carbonRepository): Response
 {
     $carbonRepository->setAllCarbonVisibleToOne();
     return new Response('All carbon footprints visible values have been set to 1');
 }
 
-#[Route('/carbon/add3', name: 'app_carbon_add3', methods: ['POST'])]
+#[Route('/add3', name: 'app_carbon_add3', methods: ['POST'])]
 public function addCarbon3(Request $request, CarbonRepository $carbonRepository, ProductRepository $productRepository): Response
 {
     $productId = $request->headers->get('product_id');
@@ -265,7 +267,7 @@ public function addCarbon3(Request $request, CarbonRepository $carbonRepository,
 
     return new Response('good');
 }
-#[Route('/carbon/recalculate', name: 'app_carbon_recalculate', methods: ['PUT'])]
+#[Route('/recalculate', name: 'app_carbon_recalculate', methods: ['PUT'])]
 public function recalculateCarbonBadges(CarbonRepository $carbonRepository, LoggerInterface $logger): Response
 {
     // Log when the process starts
@@ -287,11 +289,10 @@ public function recalculateCarbonBadges(CarbonRepository $carbonRepository, Logg
 }
 
 
-#[Route('/carbon/remove/{productId}', name: 'app_carbon_remove', methods: ['DELETE'])]
+#[Route('/remove/{productId}', name: 'app_carbon_remove', methods: ['DELETE'])]
 public function removeCarbon(int $productId, CarbonRepository $carbonRepository): Response
 {
     try {
-        // Call the removeByProductId method to delete the carbon entity
         $carbonRepository->removeByProductId($productId, true);
         $carbonRepository->recalculateAllBadges();
 
@@ -304,7 +305,5 @@ public function removeCarbon(int $productId, CarbonRepository $carbonRepository)
         return new Response('Error: ' . $e->getMessage(), 400);
     }
 }
-
-
-  
+ 
 }

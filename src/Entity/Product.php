@@ -32,6 +32,10 @@ class Product
     #[ORM\Column]
     private ?int $bonifpoint = null;
 
+    #[ORM\Column]
+    private ?bool $bonifvisible = null;
+
+
    #[ORM\ManyToOne(targetEntity:Category::class)]
    #[ORM\JoinColumn(name: 'id_category', referencedColumnName: 'id_category',nullable: true)]
    private ?Category $id_category =  null;
@@ -118,6 +122,17 @@ class Product
         return $this;
     }
 
+    public function getBonifVisible(): ?int
+    {
+        return $this->bonifvisible;
+    }
+
+    public function setBonifVisible(int $bonifvisible): static
+    {
+        $this->bonifvisible = $bonifvisible;
+
+        return $this;
+    }
     public function getBonifpoint(): ?int
     {
         return $this->bonifpoint;

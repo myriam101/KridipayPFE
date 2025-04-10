@@ -11,7 +11,7 @@ use App\Entity\Enum\EnergyClass;
 use App\Entity\Enum\Designation;
 use App\Entity\Feature;
 use App\Entity\Category;
-
+use App\Entity\Client;
 
 class AppFixtures extends Fixture
 {
@@ -23,6 +23,8 @@ class AppFixtures extends Fixture
          $product->setReference('REF12345');
          $product->setBrand('BrandName');
          $product->setBonifpoint(100);
+         $product->setBonifVisible(1);
+
          // Creating and associating Feature
         $feature = new Feature();
         $feature->setWeight(15);
@@ -66,10 +68,16 @@ class AppFixtures extends Fixture
         $product->setFeature($feature);
         $product->setIdCategory($category);
 
+        $client = new Client();
+        $client->setAdress('menzah 8');
+        $manager->persist($client);
+      
 
         // Persist both entities (product and feature)
          $manager->persist($feature);
          $manager->persist($product);
          $manager->flush();
+
+        
     }
 }

@@ -31,6 +31,13 @@ class BonifPoint
     #[ORM\Column(type: Types::STRING, enumType: Typepoint::class)] 
     private Typepoint $type_point;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $remainingPts = 0;
+
+    #[ORM\ManyToOne(targetEntity: Product::class)]
+    #[ORM\JoinColumn(name: 'id_product', referencedColumnName: 'id', nullable: true)]
+    private ?Product $product = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -90,6 +97,28 @@ class BonifPoint
     public function setTypePoint(Typepoint $type_point): self
     {
         $this->type_point = $type_point;
+        return $this;
+    }
+    public function getRemainingPts(): ?int
+    {
+        return $this->remainingPts;
+    }
+
+    public function setRemainingPts(int $remainingPts): static
+    {
+        $this->remainingPts = $remainingPts;
+
+        return $this;
+    }
+    public function getProduct(): ?Product
+    {
+        return $this->product;
+    }
+
+    public function setProduct(?Product $product): self
+    {
+        $this->product = $product;
+
         return $this;
     }
 }

@@ -115,6 +115,30 @@ class ProductRepository extends ServiceEntityRepository
     return true;
 }
 
+ // Method to set all bonifvisible visible to 0
+ public function setAllBonifToNotVisible()
+ {
+     $qb = $this->createQueryBuilder('c')
+         ->update(Product::class, 'c')
+         ->set('c.bonifvisible', ':bonifvisible')
+         ->where('c.bonifvisible = 1')
+         ->setParameter('bonifvisible', 0);
+ 
+     $qb->getQuery()->execute();
+ }
+ 
+ // Method to set all bonifvisible visible to 1
+ public function setAllBonifToVisible()
+ {
+     $qb = $this->createQueryBuilder('c')
+         ->update(Product::class, 'c')
+         ->set('c.bonifvisible', ':bonifvisible')
+         ->where('c.bonifvisible = 0')
+         ->setParameter('bonifvisible', 1);
+ 
+     $qb->getQuery()->execute();
+ }
+ 
     
     //    /**
     //     * @return Product[] Returns an array of Product objects

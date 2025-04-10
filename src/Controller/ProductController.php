@@ -13,6 +13,7 @@ use App\Entity\Enum\Designation;
 
 use Psr\Log\LoggerInterface;
 
+#[Route('/Product')]
 class ProductController extends AbstractController
 {
     private LoggerInterface $logger;
@@ -29,7 +30,7 @@ class ProductController extends AbstractController
     }
 
 
-    #[Route('/product/add', name: 'product_add', methods: ['POST'])]
+    #[Route('/add', name: 'product_add', methods: ['POST'])]
 public function addProduct(Request $request, CategoryRepository $categoryRepository, ProductRepository $productRepository): Response
 {
     //$this->logger->info('Received request data: ' . json_encode($request->request->all()));
@@ -69,8 +70,9 @@ public function addProduct(Request $request, CategoryRepository $categoryReposit
     return new Response('Product added successfully');
 
 }
+
 //** update or add bonus point to a specified product */
-#[Route('/product/update-bonif', name: 'product_update_bonif', methods: ['PUT'])]
+#[Route('/update-bonif', name: 'product_update_bonif', methods: ['PUT'])]
 public function updateBonif(Request $request, ProductRepository $productRepository, EntityManagerInterface $em): Response
 {
     $productId = $request->headers->get('product_id');
@@ -94,7 +96,37 @@ public function updateBonif(Request $request, ProductRepository $productReposito
     return new Response("Bonification points updated to $points for product ID $productId", 200);
 }
 
+/** bonif not visible on products */
+#[Route('/bonifnotvisible', name: 'app_product_bonifnotvisible', methods: ['POST'])]
+public function setAllBonifVisibleToZero(ProductRepository $productRepository): Response
+{
+    $productRepository->setAllBonifToNotVisible();
+    return new Response('bonif points not visible anymore');
+}
+/** bonif visible on products */
 
+#[Route('/bonifvisible', name: 'app_product_bonifvisible', methods: ['POST'])]
+public function setAllBonifVisibleToOne(ProductRepository $productRepository): Response
+{
+    $productRepository->setAllBonifToVisible();
+    return new Response('bonif points visible');
+}
 
+/** display bonif point only if "bonifvisible" is set to 1 */
+#[Route('/pointsdisplay', name: 'get_points', methods: ['GET'])]
+public function getVisibleBonifPoints(ProductRepository $productRepository): Response
+{
+    $products = $productRepository->findBy(['bonifvisible' => true]);
+
+    $data = array_map(function ($product) {
+        return [
+            'product_id' => $product->getId(),
+            'name' => $product->getName(),
+            'bonifpoint' => $product->getBonifpoint()
+        ];
+    }, $products);
+
+    return new Response(json_encode($data), 200, ['Content-Type' => 'application/json']);
+}
 
 }
