@@ -6,6 +6,8 @@ use App\Repository\PriceGazRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
 use App\Entity\Enum\TrancheGaz;
+use App\Entity\Enum\Sector;
+
 
 #[ORM\Entity(repositoryClass: PriceGazRepository::class)]
 class PriceGaz
@@ -16,13 +18,13 @@ class PriceGaz
     private ?int $id = null;
 
     #[ORM\Column]
-    private ?bool $pressure = null;
-
-    #[ORM\Column]
     private ?float $price = null;
 
     #[ORM\Column(type: Types::STRING, enumType: TrancheGaz::class)] 
     private TrancheGaz $tranche_gaz;
+
+    #[ORM\Column(type: Types::STRING, enumType: Sector::class)] 
+    private Sector $sector;
 
     // OneToOne relationship with EnergyBill
     #[ORM\OneToOne(targetEntity: EnergyBill::class, mappedBy: "priceGaz")]
@@ -33,17 +35,6 @@ class PriceGaz
         return $this->id;
     }
 
-    public function isPressure(): ?bool
-    {
-        return $this->pressure;
-    }
-
-    public function setPressure(bool $pressure): static
-    {
-        $this->pressure = $pressure;
-
-        return $this;
-    }
 
     public function getPrice(): ?float
     {
@@ -64,6 +55,16 @@ class PriceGaz
     public function setTrancheGaz(TrancheGaz $tranche_gaz): self
     {
         $this->tranche_gaz = $tranche_gaz;
+        return $this;
+    }
+    public function getSector(): Sector
+    {
+        return $this->sector;
+    }
+
+    public function setSector(Sector $sector): self
+    {
+        $this->sector = $sector;
         return $this;
     }
     public function getEnergyBill(): ?EnergyBill

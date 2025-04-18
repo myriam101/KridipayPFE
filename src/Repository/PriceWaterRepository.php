@@ -5,7 +5,8 @@ namespace App\Repository;
 use App\Entity\PriceWater;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-
+use App\Entity\Enum\TrancheEau;
+use App\Entity\Enum\BillCategory;
 /**
  * @extends ServiceEntityRepository<PriceWater>
  */
@@ -15,6 +16,25 @@ class PriceWaterRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, PriceWater::class);
     }
+    public function existsByTranche(TrancheEau $tranche): bool
+{
+    return (bool) $this->createQueryBuilder('pw')
+        ->select('1')
+        ->where('pw.tranche_eau = :tranche')
+        ->setParameter('tranche', $tranche)
+        ->getQuery()
+        ->getOneOrNullResult();
+}
+public function findApplicablePrice(float $consumption): ?PriceWater
+    {
+        return $this->createQueryBuilder('p')
+            ->where(':consumption BETWEEN p.tranche_eau.min AND p.tranche_eau.max')
+            ->setParameter('consumption', $consumption)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+
 
     //    /**
     //     * @return PriceWater[] Returns an array of PriceWater objects

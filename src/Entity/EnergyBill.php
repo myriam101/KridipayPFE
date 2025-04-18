@@ -30,25 +30,33 @@ class EnergyBill
     #[ORM\Column(type: Types::STRING, enumType: BillCategory::class)] 
     private BillCategory $bill_category;
 
-    #[ORM\OneToOne(targetEntity: Product::class, inversedBy: "energyBill")]
-    #[ORM\JoinColumn(name: "id_product", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
-    private ?Product $product = null;
-
     #[ORM\OneToOne(targetEntity: PriceWater::class, inversedBy: "energyBill")]
     #[ORM\JoinColumn(name: "price_water_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
     private ?PriceWater $priceWater = null;
  
-    // OneToOne relationship with PriceGaz
     #[ORM\OneToOne(targetEntity: PriceGaz::class, inversedBy: "energyBill")]
     #[ORM\JoinColumn(name: "price_gaz_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
     private ?PriceGaz $priceGaz = null;
 
-    // OneToOne relationship with PriceElectricity
     #[ORM\OneToOne(targetEntity: PriceElectricity::class, inversedBy: "energyBill")]
     #[ORM\JoinColumn(name: "price_electricity_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
     private ?PriceElectricity $priceElectricity = null;
 
 
+    #[ORM\ManyToOne(targetEntity: Simulation::class, inversedBy: "energyBills")]
+    #[ORM\JoinColumn(name: "simulation_id", referencedColumnName: "id", nullable: false)]
+    private ?Simulation $simulation = null;
+    
+    public function getSimulation(): ?Simulation
+    {
+        return $this->simulation;
+    }
+
+    public function setSimulation(?Simulation $simulation): static
+    {
+        $this->simulation = $simulation;
+        return $this;
+    }
     public function getId(): ?int
     {
         return $this->id;
@@ -111,16 +119,7 @@ class EnergyBill
         $this->bill_category = $bill_category;
         return $this;
     }
-    public function getProduct(): ?Product
-    {
-        return $this->product;
-    }
-
-    public function setProduct(Product $product): static
-    {
-        $this->product = $product;
-        return $this;
-    }
+  
     public function getPriceWater(): ?PriceWater
     {
         return $this->priceWater;

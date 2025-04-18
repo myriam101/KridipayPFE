@@ -3,6 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\PriceGaz;
+use App\Entity\Enum\TrancheGaz;
+use App\Entity\Enum\Sector;
+
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,6 +19,23 @@ class PriceGazRepository extends ServiceEntityRepository
         parent::__construct($registry, PriceGaz::class);
     }
 
+    public function findExistingTrancheSector(TrancheGaz $tranche, Sector $sector): ?PriceGaz
+{
+    return $this->findOneBy([
+        'tranche_gaz' => $tranche,
+        'sector' => $sector
+    ]);
+}
+public function findApplicablePrice(float $consumption, Sector $sector): ?PriceGaz
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.sector = :sector')
+            ->andWhere(':consumption BETWEEN p.tranche_gaz.min AND p.tranche_gaz.max')
+            ->setParameter('consumption', $consumption)
+            ->setParameter('sector', $sector)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
     //    /**
     //     * @return PriceGaz[] Returns an array of PriceGaz objects
     //     */

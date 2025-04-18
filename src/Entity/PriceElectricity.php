@@ -9,8 +9,6 @@ use App\Entity\Enum\PeriodeUse;
 use App\Entity\Enum\Sector;
 use App\Entity\Enum\TrancheElect;
 
-
-
 #[ORM\Entity(repositoryClass: PriceElectricityRepository::class)]
 class PriceElectricity
 {

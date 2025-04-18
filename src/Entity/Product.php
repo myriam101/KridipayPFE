@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProductRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 class Product
@@ -48,12 +49,9 @@ class Product
    #[ORM\JoinColumn(name: 'id_catalog', referencedColumnName: 'id_catalog',nullable: true)]
    private ?Catalog $id_catalog =  null;
 
-   #[ORM\OneToOne(targetEntity: EnergyBill::class, mappedBy: "product", cascade: ["remove"])]
-    private ?EnergyBill $energy_bill = null;
-
-    #[ORM\OneToOne(targetEntity: Simulation::class, mappedBy: "product", cascade: ["remove"])]
-    private ?Simulation $simulation = null;
-
+    #[ORM\OneToMany(mappedBy: "product", targetEntity: Simulation::class, cascade: ["remove"])]
+    private Collection $simulations;
+    
     #[ORM\OneToOne(targetEntity: Feature::class, mappedBy: "product", cascade: ["remove"])]
     private ?Feature $feature = null;
 
@@ -179,33 +177,23 @@ class Product
 
         return $this;
     }
-    public function getEnergyBill(): ?EnergyBill
+   
+
+    public function getSimulations(): Collection
     {
-        return $this->energy_bill;
+    return $this->simulations;
     }
 
-    public function setEnergyBill(?EnergyBill $energy_bill): static
-    {
-        $this->energy_bill = $energy_bill;
-        if ($energy_bill !== null) {
-            $energy_bill->setProduct($this);
-        }
-        return $this;
-    }
-    public function getSimulation(): ?Simulation
-    {
-        return $this->simulation;
-    }
 
-    public function setSimulation(?Simulation $simulation): static
-    {
-        $this->simulation = $simulation;
-        if ($simulation !== null) {
-            $simulation->setProduct($this);
-        }
-        return $this;
-    }
-
+    public function SetSimulation(Simulation $simulation): self
+     {
+         if (!$this->simulations->contains($simulation)) {
+             $this->simulations->add($simulation);
+             $simulation->setProduct($this);
+         }
+ 
+         return $this;
+     }
     public function getFeature(): ?Feature
     {
         return $this->feature;

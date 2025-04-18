@@ -12,6 +12,4 @@ enum TrancheEau: string
     case HUNDRED_FIFTY_PLUS = '151+';
    
 
-
-
 }

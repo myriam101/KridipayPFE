@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\SimulationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity(repositoryClass: SimulationRepository::class)]
 class Simulation
@@ -14,8 +16,8 @@ class Simulation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $duration_use = null;
+    #[ORM\Column(type: Types::INTEGER)]
+    private ?int $duration_use = null;
 
     #[ORM\Column]
     private ?int $nbr_use = null;
@@ -23,21 +25,58 @@ class Simulation
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $hour_use = null;
 
-    #[ORM\OneToOne(targetEntity: Product::class, inversedBy: "simulation")]
+    #[ORM\ManyToOne(targetEntity: Product::class)]
     #[ORM\JoinColumn(name: "id_product", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?Product $product = null;
+    
+    #[ORM\ManyToOne(targetEntity: Client::class)]
+    #[ORM\JoinColumn(name: "id_client", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
+    private ?Client $client = null;
+    
+     #[ORM\OneToMany(mappedBy: "simulation", targetEntity: EnergyBill::class, cascade: ["remove"])]
+     private Collection $energyBills;
+ 
+     public function __construct()
+     {
+         $this->energyBills = new ArrayCollection();
+     }
 
+     public function getEnergyBills(): Collection
+    {
+        return $this->energyBills;
+    }
+    public function addEnergyBill(EnergyBill $energyBill): static
+    {
+        if (!$this->energyBills->contains($energyBill)) {
+            $this->energyBills[] = $energyBill;
+            $energyBill->setSimulation($this);
+        }
+    
+        return $this;
+    }
+ 
+    public function getIdClient(): ?Client
+    {
+        return $this->client;
+    }
+
+    public function setIdClient(?Client $client): self
+    {
+        $this->client = $client;
+
+        return $this;
+    }
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getDurationUse(): ?\DateTimeInterface
+    public function getDurationUse(): ?int
     {
         return $this->duration_use;
     }
 
-    public function setDurationUse(\DateTimeInterface $duration_use): static
+    public function setDurationUse(int $duration_use): static
     {
         $this->duration_use = $duration_use;
 
