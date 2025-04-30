@@ -55,6 +55,16 @@ class Product
     #[ORM\OneToOne(targetEntity: Feature::class, mappedBy: "product", cascade: ["remove"])]
     private ?Feature $feature = null;
 
+    #[ORM\ManyToOne(inversedBy: 'produits')]
+    #[ORM\JoinColumn(name: 'id_provider', referencedColumnName: 'id_provider',nullable: true)]
+    private ?Provider $provider = null;
+
+    /**
+     * @var Collection<int, Productcatalog>
+     */
+    #[ORM\OneToMany(targetEntity: ProductCatalog::class, mappedBy: 'product')]
+    private Collection $productCatalogs;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -205,6 +215,46 @@ class Product
         if ($feature !== null) {
             $feature->setProduct($this);
         }
+        return $this;
+    }
+/**
+     * @return Collection<int, ProductCatalog>
+     */
+    public function getProductCatalogs(): Collection
+    {
+        return $this->productCatalogs;
+    }
+
+    public function addProductCatalog(ProductCatalog $productCatalog): static
+    {
+        if (!$this->productCatalogs->contains($productCatalog)) {
+            $this->productCatalogs->add($productCatalog);
+            $productCatalog->setProduct($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProductCatalog(ProductCatalog $productCatalog): static
+    {
+        if ($this->productCatalogs->removeElement($productCatalog)) {
+            // set the owning side to null (unless already changed)
+            if ($productCatalog->getProduct() === $this) {
+                $productCatalog->setProduct(null);
+            }
+        }
+
+        return $this;
+    }
+ public function getProvider(): ?Provider
+    {
+        return $this->provider;
+    }
+
+    public function setProvider(?Provider $provider): static
+    {
+        $this->provider = $provider;
+
         return $this;
     }
 

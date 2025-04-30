@@ -8,8 +8,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\ProductRepository;
 use App\Entity\Product;
+use App\Entity\Catalog;
+use App\Entity\Category;
+
 use App\Repository\CategoryRepository;
-use App\Entity\Enum\Designation; 
+use App\Entity\Enum\Designation;
+use App\Repository\ProviderRepository;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
 
 use Psr\Log\LoggerInterface;
 
@@ -28,7 +35,6 @@ class ProductController extends AbstractController
 
 
     }
-
 
     #[Route('/add', name: 'product_add', methods: ['POST'])]
 public function addProduct(Request $request, CategoryRepository $categoryRepository, ProductRepository $productRepository): Response
@@ -128,5 +134,133 @@ public function getVisibleBonifPoints(ProductRepository $productRepository): Res
 
     return new Response(json_encode($data), 200, ['Content-Type' => 'application/json']);
 }
+#[Route('/provider/{id}/add-product', name: 'add_product_by_provider', methods: ['POST'])]
+public function addProductByProvider(
+    Request $request,
+    EntityManagerInterface $em,
+    ProviderRepository $providerRepository,
+    CategoryRepository $categoryRepository,
+    int $id
+): JsonResponse {
+    $data = json_decode($request->getContent(), true);
 
+    $provider = $providerRepository->find($id);
+    if (!$provider) {
+        return new JsonResponse(['error' => 'Provider not found'], 404);
+    }
+
+    $category = null;
+    if (!empty($data['category_id'])) {
+        $category = $categoryRepository->find($data['category_id']);
+    }
+
+    $product = new Product();
+    $product->setName($data['name'] ?? '');
+    $product->setDescription($data['description'] ?? '');
+    $product->setShortDescription($data['short_description'] ?? '');
+    $product->setReference($data['reference'] ?? '');
+    $product->setBrand($data['brand'] ?? '');
+    $product->setBonifpoint($data['bonifpoint'] ?? 0);
+    $product->setBonifvisible($data['bonifvisible'] ?? true);
+    $product->setProvider($provider);
+    $product->setIdCategory($category);
+
+    $em->persist($product);
+    $em->flush();
+
+    return new JsonResponse(['message' => 'Product added successfully', 'product_id' => $product->getId()], 201);
+}
+#[Route('/catalog/{catalogId}/{productId}/add', name: 'add_product_to_catalog', methods: ['POST'])]
+    public function addProductToCatalog(
+        int $productId,
+        int $catalogId,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $product = $em->getRepository(Product::class)->find($productId);
+        $catalog = $em->getRepository(Catalog::class)->find($catalogId);
+
+        if (!$product || !$catalog) {
+            return new JsonResponse(['error' => 'Product or catalog not found'], 404);
+        }
+
+        $product->setIdCatalog($catalog);
+        $em->persist($product);
+        $em->flush();
+
+        return new JsonResponse(['message' => 'Product added to catalog successfully']);
+    }
+    #[Route('/catalog/{catalogId}/all', name: 'get_products_by_catalog', methods: ['GET'])]
+    public function getProductsByCatalog(
+        int $catalogId,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        // Récupérer le catalogue à partir de son ID
+        $catalog = $em->getRepository(Catalog::class)->find($catalogId);
+
+        if (!$catalog) {
+            return new JsonResponse(['error' => 'Catalog not found'], 404);
+        }
+
+        // Récupérer tous les produits associés au catalogue
+        $products = $em->getRepository(Product::class)
+            ->findBy(['id_catalog' => $catalog]);
+
+        if (empty($products)) {
+            return new JsonResponse(['message' => 'No products found for this catalog'], 404);
+        }
+
+        // Transformer les produits en tableau (ou en une structure JSON appropriée)
+        $productData = [];
+        foreach ($products as $product) {
+            $productData[] = [
+                'id' => $product->getId(),
+                'name' => $product->getName(),
+                'description' => $product->getDescription(),
+                'reference' => $product->getReference(),
+                'brand' => $product->getBrand(),
+                'bonifpoint' => $product->getBonifpoint(),
+                'bonifvisible' => $product->getBonifvisible(),
+                // Ajoute d'autres informations si nécessaire
+            ];
+        }
+
+        return new JsonResponse($productData);
+    }
+    #[Route('/catalog/{catalogId}/category/{categoryId}/all', name: 'get_products_by_catalog_and_category', methods: ['GET'])]
+    public function getProductsByCatalogAndCategory(
+        int $catalogId,
+        int $categoryId,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $catalog = $em->getRepository(Catalog::class)->find($catalogId);
+        $category = $em->getRepository(Category::class)->find($categoryId);
+
+        if (!$catalog || !$category) {
+            return new JsonResponse(['error' => 'Catalog or Category not found'], 404);
+        }
+
+        $products = $em->getRepository(Product::class)->findBy([
+            'id_catalog' => $catalog,
+            'id_category' => $category
+        ]);
+
+        if (empty($products)) {
+            return new JsonResponse(['message' => 'No products found in this category for this catalog'], 404);
+        }
+
+        $productData = [];
+        foreach ($products as $product) {
+            $productData[] = [
+                'id' => $product->getId(),
+                'name' => $product->getName(),
+                'description' => $product->getDescription(),
+                'reference' => $product->getReference(),
+                'brand' => $product->getBrand(),
+                'bonifpoint' => $product->getBonifpoint(),
+                'bonifvisible' => $product->getBonifvisible(),
+            ];
+        }
+
+        return new JsonResponse($productData);
+    }
 }
