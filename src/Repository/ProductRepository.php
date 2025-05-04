@@ -5,10 +5,12 @@ namespace App\Repository;
 use App\Entity\Product;
 use App\Entity\Feature;
 use App\Entity\Category;
+use App\Entity\Enum\Designation;
 use App\Entity\Enum\EnergyClass;
 use App\Entity\Enum\Type;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @extends ServiceEntityRepository<Product>
@@ -138,7 +140,25 @@ class ProductRepository extends ServiceEntityRepository
  
      $qb->getQuery()->execute();
  }
+ public function findByCatalogAndDesignation(int $catalogId, Designation $designation): ArrayCollection
+ {
+     // Créer la requête DQL ou QueryBuilder
+     $qb = $this->createQueryBuilder('p')
+         ->join('p.category', 'c') // Assurer la relation avec la catégorie
+         ->join('p.catalog', 'cat') // Assurer la relation avec le catalogue
+         ->where('cat.id = :catalogId')
+         ->andWhere('c.designation = :designation')
+         ->setParameter('catalogId', $catalogId)
+         ->setParameter('designation', $designation->value);  // On passe la valeur de l'enum
  
+     // Exécution de la requête
+     $query = $qb->getQuery();
+     $result = $query->getResult(); // On obtient un tableau de résultats
+ 
+     // Retourner une ArrayCollection
+     return new ArrayCollection($result);
+ }
+
     
     //    /**
     //     * @return Product[] Returns an array of Product objects

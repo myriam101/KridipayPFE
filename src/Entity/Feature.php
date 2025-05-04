@@ -73,30 +73,32 @@ class Feature
 
     #[ORM\Column]
     private ?float $diagonal = null;
+    #[ORM\Column]
+    private ?float $debit = null;
 
     //classe energetique generale
     #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
     private EnergyClass $energy_class;
 
    //performance condensation
-    #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
-    private EnergyClass $condens_perform;
+    //#[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
+    //private EnergyClass $condens_perform;
 
     //classe energetique essorage
-    #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
-    private EnergyClass $spindry_class;
+   // #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
+   // private EnergyClass $spindry_class;
     
     //classe energetique vapeur
-    #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
-    private EnergyClass $steam_class;
+   // #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
+   // private EnergyClass $steam_class;
 
     //classe eclairage
-    #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
-    private EnergyClass $light_class;
+  //  #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
+  //  private EnergyClass $light_class;
 
     //classe filtration
-    #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
-    private EnergyClass $filtre_class;
+  //  #[ORM\Column(type: Types::STRING, enumType: EnergyClass::class)] 
+  //  private EnergyClass $filtre_class;
 
      #[ORM\Column(type: Types::STRING, enumType: Type::class)] 
      private Type $type;
@@ -338,6 +340,17 @@ class Feature
 
         return $this;
     }
+    public function getDebit(): ?float
+    {
+        return $this->debit;
+    }
+
+    public function setDebit(float $debit): static
+    {
+        $this->debit = $debit;
+
+        return $this;
+    }
     public function getEnergyClass(): EnergyClass
     {
         return $this->energy_class;
@@ -349,57 +362,6 @@ class Feature
         return $this;
     }
 
-    public function getCondensPerform(): EnergyClass
-    {
-        return $this->condens_perform;
-    }
-
-    public function setCondensPerform(EnergyClass $condens_perform): self
-    {
-        $this->condens_perform = $condens_perform;
-        return $this;
-    }
-    
-    public function getSpingdryClass(): EnergyClass
-    {
-        return $this->spindry_class;
-    }
-
-    public function setSpingdryClass(EnergyClass $spindry_class): self
-    {
-        $this->spindry_class = $spindry_class;
-        return $this;
-    }
-    public function getSteamClass(): EnergyClass
-    {
-        return $this->steam_class;
-    }
-
-    public function setSteamClass(EnergyClass $steam_class): self
-    {
-        $this->steam_class = $steam_class;
-        return $this;
-    }
-    public function getLightClass(): EnergyClass
-    {
-        return $this->light_class;
-    }
-
-    public function setLightClass(EnergyClass $light_class): self
-    {
-        $this->light_class = $light_class;
-        return $this;
-    }
-    public function getFiltreClass(): EnergyClass
-    {
-        return $this->filtre_class;
-    }
-
-    public function setFiltreClass(EnergyClass $filtre_class): self
-    {
-        $this->filtre_class = $filtre_class;
-        return $this;
-    }
     public function getType(): Type
     {
         return $this->type;

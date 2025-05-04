@@ -53,7 +53,8 @@ class CarbonController extends AbstractController
             'value' => $carbon->getValue(),
             'date_add' => $carbon->getDateAdd()->format('Y-m-d H:i:s'),
             'date_update' => $carbon->getDateUpdate()->format('Y-m-d H:i:s'),
-            'visible' => $carbon->isVisible()
+            'visible' => $carbon->isVisible(),
+            'badge' => $carbon->getBadge(), // Convert Enum to string
         ]);
     }
     

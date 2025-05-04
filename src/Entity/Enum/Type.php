@@ -10,4 +10,5 @@ enum Type: string
     case Electrique = 'Electrique';
     case Eau = 'Eau';
     case Air = 'Air';
+    case none = 'none';
 }

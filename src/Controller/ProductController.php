@@ -7,13 +7,19 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\ProductRepository;
+use App\Repository\CatalogRepository;
+
 use App\Entity\Product;
 use App\Entity\Catalog;
 use App\Entity\Category;
+use App\Entity\Feature;
 
 use App\Repository\CategoryRepository;
 use App\Entity\Enum\Designation;
+use App\Entity\Enum\EnergyClass;
+use App\Entity\Enum\Type;
 use App\Repository\ProviderRepository;
+use App\Repository\UserRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -134,11 +140,10 @@ public function getVisibleBonifPoints(ProductRepository $productRepository): Res
 
     return new Response(json_encode($data), 200, ['Content-Type' => 'application/json']);
 }
-#[Route('/provider/{id}/add-product', name: 'add_product_by_provider', methods: ['POST'])]
-public function addProductByProvider(
+#[Route('/provider2/{id}/add-product', name: 'add_product2_by_provider', methods: ['POST'])]
+public function addProduct2ByProvider(
     Request $request,
-    EntityManagerInterface $em,
-    ProviderRepository $providerRepository,
+    UserRepository $providerRepository,
     CategoryRepository $categoryRepository,
     int $id
 ): JsonResponse {
@@ -165,11 +170,111 @@ public function addProductByProvider(
     $product->setProvider($provider);
     $product->setIdCategory($category);
 
-    $em->persist($product);
-    $em->flush();
+    $this->entityManager->persist($product);
+    $this->entityManager->flush();
 
     return new JsonResponse(['message' => 'Product added successfully', 'product_id' => $product->getId()], 201);
 }
+#[Route('/provider/{id}/add-product', name: 'add_product_by_provider', methods: ['POST'])]
+public function addProductByProvider(
+    Request $request,
+    UserRepository $providerRepository,
+    CategoryRepository $categoryRepository,
+    CatalogRepository $catalogRepository,
+    int $id
+): JsonResponse {
+    $data = json_decode($request->getContent(), true);
+
+    $provider = $providerRepository->find($id);
+    if (!$provider) {
+        return new JsonResponse(['error' => 'Provider not found'], 404);
+    }
+
+    $category = null;
+    if (!empty($data['category_id'])) {
+        $category = $categoryRepository->find($data['category_id']);
+    }
+    // 👇 Ajout du catalog
+    $catalog = null;
+    if (!empty($data['id_catalog'])) {
+        $catalog = $catalogRepository->find($data['id_catalog']);
+        if (!$catalog) {
+            return new JsonResponse(['error' => 'Catalog not found'], 404);
+        }
+    }
+
+    // Création du produit
+    $product = new Product();
+    $product->setName($data['name'] ?? '');
+    $product->setDescription($data['description'] ?? '');
+    $product->setShortDescription($data['short_description'] ?? '');
+    $product->setReference($data['reference'] ?? '');
+    $product->setBrand($data['brand'] ?? '');
+    $product->setBonifpoint($data['bonifpoint'] ?? 0);
+    $product->setBonifvisible($data['bonifvisible'] ?? true);
+    $product->setProvider($provider);
+    $product->setIdCategory($category);
+  // 👇 Lien vers le catalogue
+  if ($catalog) {
+    $product->setIdCatalog($catalog);
+}
+    $this->entityManager->persist($product);
+    $this->entityManager->flush(); // pour générer l'ID
+
+    // Ajout des features si présentes dans les données
+    if (!empty($data['features'])) {
+        $featuresData = $data['features'];
+        $feature = new Feature();
+
+        // Exemple d’attributs à adapter selon ton entité Feature
+        $feature->setWeight($featuresData['weight'] ?? 0);
+        $feature->setNoise($featuresData['noise'] ?? 0);
+        $feature->setPower($featuresData['power'] ?? 0);
+        $feature->setConsumptionLiter($featuresData['consumption_liter'] ?? 0);
+        $feature->setConsumptionWatt($featuresData['consumption_watt'] ?? 0);
+        $feature->setCapacity($featuresData['capacity'] ?? 0);
+        $feature->setSeer($featuresData['seer'] ?? 0);
+        $feature->setScop($featuresData['scop'] ?? 0);
+        $feature->setHdrConsumption($featuresData['hdr_consumption'] ?? 0);
+        $feature->setSdrConsumption($featuresData['sdr_consumption'] ?? 0);
+        $feature->setDimension($featuresData['dimension'] ?? 0);
+        $feature->setDiagonal($featuresData['diagonal'] ?? 0);
+        $feature->setVolumeRefrigeration($featuresData['volume_refrigeration'] ?? 0);
+        $feature->setVolumeCollect($featuresData['volume_collect'] ?? 0);
+        $feature->setVolumeFreezer($featuresData['freezer'] ?? 0);
+        $feature->setCycleDuration($featuresData['cycle_duration'] ?? 0);
+        $feature->setNbrCouvert($featuresData['nbr_couvert'] ?? 0);
+        $feature->setNbBottle($featuresData['nb_bottle'] ?? 0);
+        $feature->setResolution($featuresData['resolution'] ?? 0);
+        $feature->setDebit($featuresData['debit'] ?? 0);
+        $energyClassValue = $featuresData['energy_class'] ?? null;
+        if ($energyClassValue && EnergyClass::tryFrom($energyClassValue)) {
+            $feature->setEnergyClass(EnergyClass::from($energyClassValue));
+        }
+        $typeValue = $featuresData['type'] ?? null;
+        if ($typeValue && Type::tryFrom($typeValue)) {
+            $feature->setType(Type::from($typeValue));
+        }
+
+
+
+
+
+
+
+        $feature->setProduct($product); // lien vers le produit
+
+        $this->entityManager->persist($feature);
+        $this->entityManager->flush();
+    }
+
+    return new JsonResponse([
+        'message' => 'Product and feature added successfully',
+        'product_id' => $product->getId()
+    ], 201);
+}
+
+
 #[Route('/catalog/{catalogId}/{productId}/add', name: 'add_product_to_catalog', methods: ['POST'])]
     public function addProductToCatalog(
         int $productId,
@@ -216,6 +321,7 @@ public function addProductByProvider(
                 'id' => $product->getId(),
                 'name' => $product->getName(),
                 'description' => $product->getDescription(),
+                'short_description'=> $product->getShortDescription(),
                 'reference' => $product->getReference(),
                 'brand' => $product->getBrand(),
                 'bonifpoint' => $product->getBonifpoint(),
@@ -263,4 +369,23 @@ public function addProductByProvider(
 
         return new JsonResponse($productData);
     }
+    #[Route('/catalog/{catalogId}/category/{categoryId}/products', name: 'get_products_by_catalog_and_designation', methods: ['GET'])]
+    public function getProductsByCatalogAndDesignation(int $catalogId, int $categoryId, Request $request, ProductRepository $productRepository): JsonResponse
+    {
+        $designation = $request->query->get('designation');  // On récupère la designation depuis la query string (ex: /products?designation=LAVE_LINGE)
+    
+        // Si la designation n'est pas valide, on retourne une erreur
+        try {
+            $designationEnum = Designation::from($designation); // Conversion de la chaîne de la query en Enum
+        } catch (\ValueError $e) {
+            return $this->json(['error' => 'Invalid designation value'], 400);
+        }
+    
+        // On récupère les produits en fonction du catalogue et de la désignation
+        $products = $productRepository->findByCatalogAndDesignation($catalogId, $designationEnum);
+    
+        // Retourner les produits sous forme JSON
+        return $this->json($products, 200);
+    }
+
 }

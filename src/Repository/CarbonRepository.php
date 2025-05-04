@@ -32,7 +32,6 @@ class CarbonRepository extends ServiceEntityRepository
         $carbon->setProduct($product);
         $carbon->setValue($value);
         $carbon->setVisible($visible);
-        $carbon->setFactor(0.58);
         $carbon->setBadge($badge);
         $carbon->setDateAdd(new \DateTime());
         $carbon->setDateUpdate(new \DateTime());
@@ -52,7 +51,6 @@ class CarbonRepository extends ServiceEntityRepository
         $carbon->setProduct($product);
         $carbon->setValue($value);
         $carbon->setVisible($visible);
-        $carbon->setFactor(0.58);
         $carbon->setBadge(Badge :: NON_DEFINI);
         $carbon->setDateAdd(new \DateTime());
         $carbon->setDateUpdate(new \DateTime());

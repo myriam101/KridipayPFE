@@ -56,8 +56,9 @@ class Product
     private ?Feature $feature = null;
 
     #[ORM\ManyToOne(inversedBy: 'produits')]
-    #[ORM\JoinColumn(name: 'id_provider', referencedColumnName: 'id_provider',nullable: true)]
-    private ?Provider $provider = null;
+    
+    #[ORM\JoinColumn(name: 'id_provider', referencedColumnName: 'id',nullable: true)]
+    private ?User $provider = null;
 
     /**
      * @var Collection<int, Productcatalog>
@@ -246,12 +247,12 @@ class Product
 
         return $this;
     }
- public function getProvider(): ?Provider
+ public function getProvider(): ?User
     {
         return $this->provider;
     }
 
-    public function setProvider(?Provider $provider): static
+    public function setProvider(?User $provider): static
     {
         $this->provider = $provider;
 

@@ -6,11 +6,11 @@ use Symfony\Component\Routing\Attribute\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use App\Repository\ProductRepository;
+use App\Repository\CategoryRepository;
 use App\Repository\CarbonRepository;
 use Psr\Log\LoggerInterface;
 use App\Entity\Carbon;
-use App\Entity\Enum\Badge;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/category')]
 
@@ -26,5 +26,19 @@ class CategoryController extends AbstractController
         $this->entityManager = $entityManager;
         $this->logger = $logger;
 
+    }
+    #[Route('/all', name: 'get_all_categories', methods: ['GET'])]
+    public function getAllCategories(CategoryRepository $categoryRepository): JsonResponse
+    {
+        $categories = $categoryRepository->findAll();
+
+        $data = array_map(function ($category) {
+            return [
+                'id' => $category->getId(),
+                'designation' =>$category->getDesignation()
+            ];
+        }, $categories);
+
+        return new JsonResponse($data, 200);
     }
 }

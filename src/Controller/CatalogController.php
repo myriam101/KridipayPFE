@@ -64,7 +64,21 @@ class CatalogController extends AbstractController
     }
 
    
+    #[Route('/{catalogId}/categories', name: 'get_catalog_categories', methods: ['GET'])]
+    public function getCategoriesByCatalog(int $catalogId, CatalogRepository $catalogRepository): JsonResponse
+    {
+        $categories = $catalogRepository->getCategoriesByCatalog($catalogId);
 
+        $result = array_map(function ($category) {
+            return [
+                'id' => $category->getId(),
+                'name' => $category->getName(),
+                'designation' => $category->getDesignation()->name,
+            ];
+        }, $categories);
+
+        return new JsonResponse($result);
+    }
 
 
 
