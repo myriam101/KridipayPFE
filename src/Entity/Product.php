@@ -56,7 +56,6 @@ class Product
     private ?Feature $feature = null;
 
     #[ORM\ManyToOne(inversedBy: 'produits')]
-    
     #[ORM\JoinColumn(name: 'id_provider', referencedColumnName: 'id',nullable: true)]
     private ?User $provider = null;
 

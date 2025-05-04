@@ -31,6 +31,16 @@ class CatalogRepository extends ServiceEntityRepository
 
         return $query->getResult();
     }
+
+public function findByProviderId(int $providerId): array
+{
+    return $this->createQueryBuilder('c')
+        ->andWhere('c.id_provider = :providerId')
+        ->setParameter('providerId', $providerId)
+        ->getQuery()
+        ->getResult();
+}
+
     //    /**
     //     * @return Catalog[] Returns an array of Catalog objects
     //     */

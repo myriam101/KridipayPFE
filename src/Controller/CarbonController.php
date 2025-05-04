@@ -11,6 +11,7 @@ use App\Repository\CarbonRepository;
 use Psr\Log\LoggerInterface;
 use App\Entity\Carbon;
 use App\Entity\Enum\Badge;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/carbon')]
 
@@ -306,5 +307,11 @@ public function removeCarbon(int $productId, CarbonRepository $carbonRepository)
         return new Response('Error: ' . $e->getMessage(), 400);
     }
 }
- 
+#[Route('/carbon/visible-status', name: 'carbon_visible_status', methods: ['GET'])]
+public function getCarbonVisibilityStatus(CarbonRepository $carbonRepository): JsonResponse
+{
+    $visibleCount = $carbonRepository->countVisibleCarbons(); // méthode à créer dans le repo
+    return $this->json(['visible' => $visibleCount > 0]);
+}
+
 }

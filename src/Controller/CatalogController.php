@@ -35,15 +35,16 @@ class CatalogController extends AbstractController
 
     private LoggerInterface $logger;
 
-
+   private CatalogRepository $catalogRepository;
     private EntityManagerInterface $entityManager;
     private ProviderRepository $providerUserRepository;
 
-    public function __construct(EntityManagerInterface $entityManager,LoggerInterface $logger,ProviderRepository $providerUserRepository)
+    public function __construct(EntityManagerInterface $entityManager,LoggerInterface $logger,ProviderRepository $providerUserRepository, CatalogRepository $catalogRepository)
     {
         $this->entityManager = $entityManager;
         $this->logger = $logger;
         $this->providerUserRepository= $providerUserRepository;
+        $this->catalogRepository=$catalogRepository;
 
     }
     #[Route('/all', name: 'get_all_catalogs', methods: ['GET'])]
@@ -65,9 +66,9 @@ class CatalogController extends AbstractController
 
    
     #[Route('/{catalogId}/categories', name: 'get_catalog_categories', methods: ['GET'])]
-    public function getCategoriesByCatalog(int $catalogId, CatalogRepository $catalogRepository): JsonResponse
+    public function getCategoriesByCatalog(int $catalogId ): JsonResponse
     {
-        $categories = $catalogRepository->getCategoriesByCatalog($catalogId);
+        $categories = $this->catalogRepository->getCategoriesByCatalog($catalogId);
 
         $result = array_map(function ($category) {
             return [
@@ -81,5 +82,23 @@ class CatalogController extends AbstractController
     }
 
 
-
+    #[Route('/provider/{id}/catalogs', name: 'get_provider_catalogs', methods: ['GET'])]
+    public function getCatalogsByProvider(int $id, CatalogRepository $catalogRepository): JsonResponse
+    {
+        $catalogs = $catalogRepository->findByProviderId($id);
+    
+        if (empty($catalogs)) {
+            return new JsonResponse(['message' => 'Aucun catalogue trouvé pour ce fournisseur'], Response::HTTP_NOT_FOUND);
+        }
+    
+        // Vous pouvez ici normaliser les données (ou utiliser un serializer si besoin)
+        $data = array_map(function ($catalog) {
+            return [
+                'id' => $catalog->getIdCatalog(),
+                'name' => $catalog->getName(),
+            ];
+        }, $catalogs);
+    
+        return new JsonResponse($data);
+    }
 }

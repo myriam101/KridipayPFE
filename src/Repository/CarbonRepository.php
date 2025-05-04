@@ -377,6 +377,14 @@ public function removeByProductId(int $productId, bool $flush = false): void
     }
 }
 
+public function countVisibleCarbons(): int
+{
+    return $this->createQueryBuilder('c')
+        ->select('COUNT(c.id)')
+        ->where('c.visible = 1')
+        ->getQuery()
+        ->getSingleScalarResult();
+}
 
 
 

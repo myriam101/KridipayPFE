@@ -25,9 +25,9 @@ class Catalog
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdat = null;
 
-    #[ORM\ManyToOne(targetEntity:Provider::class)]
-   #[ORM\JoinColumn(name: 'id_provider', referencedColumnName: 'id_provider',nullable: true)]
-   private ?Provider $id_provider =  null;
+    #[ORM\ManyToOne(targetEntity:User::class)]
+   #[ORM\JoinColumn(name: 'id_provider', referencedColumnName: 'id',nullable: true)]
+   private ?User $id_provider =  null;
 
    #[ORM\OneToMany(targetEntity: ProductCatalog::class, mappedBy: 'catalog')]
    private Collection $productCatalogs;
@@ -71,12 +71,12 @@ class Catalog
 
         return $this;
     }
-    public function getIdProvider(): ?Provider
+    public function getIdProvider(): ?User
     {
         return $this->id_provider;
     }
 
-    public function setIdProvider(?Provider $id_provider): self
+    public function setIdProvider(?User $id_provider): self
     {
         $this->id_provider = $id_provider;
 

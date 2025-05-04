@@ -211,7 +211,7 @@ public function addProductByProvider(
     $product->setReference($data['reference'] ?? '');
     $product->setBrand($data['brand'] ?? '');
     $product->setBonifpoint($data['bonifpoint'] ?? 0);
-    $product->setBonifvisible($data['bonifvisible'] ?? true);
+    $product->setBonifvisible($data['bonifvisible'] ?? false);
     $product->setProvider($provider);
     $product->setIdCategory($category);
   // 👇 Lien vers le catalogue
