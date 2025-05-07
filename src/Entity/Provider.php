@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProviderRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 #[ORM\Entity(repositoryClass: ProviderRepository::class)]
@@ -16,8 +17,25 @@ class Provider
     private ?int $id_provider = null;
 
     #[ORM\Column(length: 128)]
+    #[Groups(['provider:read'])]
     private ?string $adress = null;
 
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: "provider")]
+    #[Groups(['provider:read'])]
+    private $User;
+    
+
+    public function getUser(): ?User
+    {
+        return $this->User;
+    }
+
+    public function setUser(?User $User): self
+    {
+        $this->User = $User;
+
+        return $this;
+    }
 
 
     public function getIdProvider(): ?int
@@ -36,4 +54,5 @@ class Provider
 
         return $this;
     }
+
 }

@@ -237,6 +237,19 @@ public function setAllCarbonVisibleToOne(CarbonRepository $carbonRepository): Re
     $carbonRepository->setAllCarbonVisibleToOne();
     return new Response('All carbon footprints visible values have been set to 1');
 }
+#[Route('/set-visible/{catalogId}/{visible}', name: 'app_carbon_set_visible_by_catalog', methods: ['POST'])]
+public function setCarbonVisibilityByCatalog(
+    int $catalogId,
+    int $visible,
+    CarbonRepository $carbonRepository
+): Response {
+    if (!in_array($visible, [0, 1])) {
+        return new Response('Invalid visibility value', 400);
+    }
+
+    $carbonRepository->setCarbonVisibilityByCatalog($catalogId, $visible);
+    return new Response("Carbon visibility set to $visible for catalog $catalogId");
+}
 
 #[Route('/add3', name: 'app_carbon_add3', methods: ['POST'])]
 public function addCarbon3(Request $request, CarbonRepository $carbonRepository, ProductRepository $productRepository): Response
@@ -307,11 +320,13 @@ public function removeCarbon(int $productId, CarbonRepository $carbonRepository)
         return new Response('Error: ' . $e->getMessage(), 400);
     }
 }
-#[Route('/carbon/visible-status', name: 'carbon_visible_status', methods: ['GET'])]
-public function getCarbonVisibilityStatus(CarbonRepository $carbonRepository): JsonResponse
+#[Route('/visible-status/{catalogId}', name: 'carbon_visible_status_by_catalog', methods: ['GET'])]
+public function getCarbonVisibilityStatusByCatalog(int $catalogId, CarbonRepository $carbonRepository): JsonResponse
 {
-    $visibleCount = $carbonRepository->countVisibleCarbons(); // méthode à créer dans le repo
+    // Vérifier la visibilité pour ce catalogue
+    $visibleCount = $carbonRepository->countVisibleCarbonsByCatalog($catalogId); // Méthode à ajouter dans le repository
     return $this->json(['visible' => $visibleCount > 0]);
 }
+
 
 }

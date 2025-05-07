@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -15,19 +16,65 @@ class User implements UserInterface,PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['provider:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['client:read','provider:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['client:read','provider:read'])]
     private ?string $username = null;
 
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['client:read','provider:read'])]
     private ?string $email = null;
+
+    #[ORM\OneToMany(targetEntity: Client::class, mappedBy: "User")]
+    private $clients;
+
+
+    #[ORM\OneToMany(targetEntity: Provider::class, mappedBy: "User")]
+    private $providers;
+
+/**
+     * @return Collection<int, ProviderUser>
+     */
+    public function getProviderUsers(): Collection
+    {
+        return $this->providers;
+    }
+
+    public function addProviderUser(Provider $provider): self
+    {
+        if (!$this->providers->contains($provider)) {
+            $this->providers[] = $provider;
+            $provider->setUser($this);
+        }
+
+        return $this;
+    }
+     /**
+     * @return Collection<int, Client>
+     */
+    public function getClients(): Collection
+    {
+        return $this->clients;
+    }
+
+    public function addClients(Client $client): self
+    {
+        if (!$this->clients->contains($client)) {
+            $this->clients[] = $client;
+            $client->setUser($this);
+        }
+
+        return $this;
+    }
 
     #[ORM\Column(type: 'json')]
     private array $roles = [];

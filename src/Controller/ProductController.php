@@ -252,9 +252,13 @@ public function addProductByProvider(
             $feature->setEnergyClass(EnergyClass::from($energyClassValue));
         }
         $typeValue = $featuresData['type'] ?? null;
+
         if ($typeValue && Type::tryFrom($typeValue)) {
             $feature->setType(Type::from($typeValue));
+        } else {
+            $feature->setType(Type::none); // Valeur par défaut
         }
+        
 
 
 

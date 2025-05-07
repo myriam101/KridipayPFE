@@ -10,13 +10,25 @@ class Cart
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity:Client::class)]
     #[ORM\JoinColumn(name: 'id_client', referencedColumnName: 'id',nullable: true)]
     private ?Client $id_client =  null;
- 
+
+    #[ORM\Column(type: "datetime")]
+    private $created_at;
+
+    #[ORM\Column(type: "string", length: 20)]
+    private $status = self::STATUS_PENDING;  
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_VALIDATED = 'validated';
+    const STATUS_CANCELLED = 'cancelled';
+  
+
+
     public function getId(): ?int
     {
         return $this->id;
@@ -32,4 +44,25 @@ class Cart
 
         return $this;
     }
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+        return $this;
+    }
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $created_at): self
+    {
+        $this->created_at = $created_at;
+        return $this;
+    }
+
 }

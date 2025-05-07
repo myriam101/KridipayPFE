@@ -16,6 +16,12 @@ class ProviderRepository extends ServiceEntityRepository
         parent::__construct($registry, Provider::class);
     }
 
+    public function findAllProviders(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->getQuery()
+            ->getResult();
+    }
     //    /**
     //     * @return Provider[] Returns an array of Provider objects
     //     */

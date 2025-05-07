@@ -377,16 +377,33 @@ public function removeByProductId(int $productId, bool $flush = false): void
     }
 }
 
-public function countVisibleCarbons(): int
+public function countVisibleCarbonsByCatalog(int $catalogId): int
 {
     return $this->createQueryBuilder('c')
+        ->innerJoin('c.product', 'p') // Jointure avec la table Product
+        ->where('p.id_catalog = :catalogId') // Filtrer par catalogue
+        ->andWhere('c.visible = 1') // Vérifier que la visibilité est activée
+        ->setParameter('catalogId', $catalogId)
         ->select('COUNT(c.id)')
-        ->where('c.visible = 1')
         ->getQuery()
         ->getSingleScalarResult();
 }
 
 
+
+public function setCarbonVisibilityByCatalog(int $catalogId, int $visible): void
+{
+    $this->createQueryBuilder('c')
+        ->update()
+        ->set('c.visible', ':visible')
+        ->where('c.product IN (
+            SELECT p.id FROM App\Entity\Product p WHERE p.id_catalog = :catalogId
+        )')
+        ->setParameter('visible', $visible)
+        ->setParameter('catalogId', $catalogId)
+        ->getQuery()
+        ->execute();
+}
 
 
     //    /**

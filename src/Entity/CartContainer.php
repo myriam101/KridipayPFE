@@ -8,6 +8,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: CartContainerRepository::class)]
 class CartContainer
 {
+    const STATUS_PENDING = 'pending';
+    const STATUS_VALIDATED = 'validated';
+    const STATUS_CANCELLED = 'cancelled';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -22,6 +26,11 @@ class CartContainer
      #[ORM\ManyToOne(targetEntity: Cart::class, inversedBy: 'cartContainers')]
      #[ORM\JoinColumn(name: 'cart_id', referencedColumnName: 'id')]
      private ?Cart $cart = null;
+ 
+     #[ORM\Column(type: "string", length: 20)]
+     private $status = self::STATUS_PENDING;
+ 
+    
  
     public function getId(): ?int
     {
@@ -48,4 +57,19 @@ class CartContainer
         $this->cart = $cart;
         return $this;
     }
+    
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
+        return $this;
+    }
+    
+
+
+
 }

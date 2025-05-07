@@ -50,5 +50,12 @@ class ProviderController extends AbstractController
             // ajoute d’autres infos si besoin
         ]);
     }
-    
+    #[Route('/all', name: 'all_provider', methods: ['GET'])]
+    public function getAllProvider(ProviderRepository $provider_repository): JsonResponse
+    {
+        $provider = $provider_repository->findAllProviders();
+
+        return $this->json($provider, 200, [], ['groups' => 'provider:read']);
+    }
+
 }
