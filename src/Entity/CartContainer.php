@@ -31,7 +31,20 @@ class CartContainer
      private $status = self::STATUS_PENDING;
  
     
- 
+     #[ORM\Column(type: 'integer')]
+     private int $quantity = 1;
+     
+     public function getQuantity(): int
+     {
+         return $this->quantity;
+     }
+     
+     public function setQuantity(int $quantity): self
+     {
+         $this->quantity = $quantity;
+         return $this;
+     }
+     
     public function getId(): ?int
     {
         return $this->id;

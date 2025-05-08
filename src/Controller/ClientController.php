@@ -7,8 +7,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\ClientRepository;
+use App\Repository\UserRepository;
+
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+
 
 #[Route('/client')]
 
@@ -33,4 +36,28 @@ class ClientController extends AbstractController
         return $this->json($clients, 200, [], ['groups' => 'client:read']);
     }
 
+    #[Route('/email/{email}', name: 'get_client_by_email', methods: ['GET'])]
+    public function getClientByEmail(string $email, UserRepository $userRepository, ClientRepository $clientRepository): JsonResponse
+    {
+        $user = $userRepository->findOneBy(['email' => $email]);
+    
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not found'], 404);
+        }
+    
+        $client = $clientRepository->findOneBy(['User' => $user]);
+    
+        if (!$client) {
+            return new JsonResponse(['error' => 'Client not found for this user'], 404);
+        }
+    
+        return new JsonResponse([
+            'client_id' => $client->getId(),
+            'user_id' => $user->getId(),
+            'email' => $user->getEmail(),
+            // ajoute d'autres infos si besoin
+        ]);
+    }
+    
+   
 }

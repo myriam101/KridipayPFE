@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\CartRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: CartRepository::class)]
 class Cart
@@ -27,7 +28,14 @@ class Cart
     const STATUS_VALIDATED = 'validated';
     const STATUS_CANCELLED = 'cancelled';
   
-
+    #[ORM\OneToMany(mappedBy: 'cart', targetEntity: CartContainer::class)]
+    private Collection $cartContainers;
+    
+    public function getCartContainers(): Collection
+    {
+        return $this->cartContainers;
+    }
+    
 
     public function getId(): ?int
     {

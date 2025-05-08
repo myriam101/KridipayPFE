@@ -93,7 +93,7 @@ class PriceWaterController extends AbstractController
         $energyBill->setAmountElectr(0);
         $energyBill->setAmountGaz(0);
         $energyBill->setAmountBill($energyBill->getAmountWater()); // total = only water for now
-        $energyBill->setBillCategory(BillCategory::MOIS);
+        $energyBill->setBillCategory(BillCategory::TRIMESTRE);
         $energyBill->setSimulation($simulation);
         $energyBill->setPriceWater($priceWater); // associate PriceWater
 

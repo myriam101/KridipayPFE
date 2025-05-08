@@ -35,7 +35,8 @@ class ProviderController extends AbstractController
         $this->logger = $logger;
 
 
-    }#[Route('/email/{email}', name: 'get_provider_by_email', methods: ['GET'])]
+    }
+    #[Route('/email/{email}', name: 'get_provider_by_email', methods: ['GET'])]
     public function getProviderByEmail(string $email, UserRepository $providerRepository): JsonResponse
     {
         $provider = $providerRepository->findOneBy(['email' => $email]);

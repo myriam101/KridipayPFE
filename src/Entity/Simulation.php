@@ -22,8 +22,11 @@ class Simulation
     #[ORM\Column]
     private ?int $nbr_use = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $hour_use = null;
+    #[ORM\Column]
+    private ?float $result_khw = null;
+
+    #[ORM\Column]
+    private ?float $reslut_lt = null;
 
     #[ORM\ManyToOne(targetEntity: Product::class)]
     #[ORM\JoinColumn(name: "id_product", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
@@ -55,17 +58,7 @@ class Simulation
         return $this;
     }
  
-    public function getIdClient(): ?Client
-    {
-        return $this->client;
-    }
-
-    public function setIdClient(?Client $client): self
-    {
-        $this->client = $client;
-
-        return $this;
-    }
+   
     public function getId(): ?int
     {
         return $this->id;
@@ -95,17 +88,6 @@ class Simulation
         return $this;
     }
 
-    public function getHourUse(): ?\DateTimeInterface
-    {
-        return $this->hour_use;
-    }
-
-    public function setHourUse(\DateTimeInterface $hour_use): static
-    {
-        $this->hour_use = $hour_use;
-
-        return $this;
-    }
     public function getProduct(): ?Product
     {
         return $this->product;
@@ -116,4 +98,36 @@ class Simulation
         $this->product = $product;
         return $this;
     }
+    public function getIdClient(): ?Client
+    {
+        return $this->client;
+    }
+
+    public function setIdClient(?Client $client): self
+    {
+        $this->client = $client;
+
+        return $this;
+    }
+    public function getResultlt(): ?float
+    {
+        return $this->reslut_lt;
+    }
+
+    public function setResultlt(float $litres): self
+{
+    $this->reslut_lt = $litres;
+    return $this;
+}
+    public function getResultKhw(): ?float
+    {
+        return $this->result_khw;
+    }
+
+    public function setResultKhw(float $kwh): self
+{
+    $this->result_khw = $kwh;
+    return $this;
+}
+
 }
