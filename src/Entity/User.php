@@ -36,6 +36,8 @@ class User implements UserInterface,PasswordAuthenticatedUserInterface
 
     #[ORM\OneToMany(targetEntity: Client::class, mappedBy: "User")]
     private $clients;
+  #[ORM\OneToMany(targetEntity: Admin::class, mappedBy: "User")]
+    private $admins;
 
 
     #[ORM\OneToMany(targetEntity: Provider::class, mappedBy: "User")]
@@ -71,6 +73,23 @@ class User implements UserInterface,PasswordAuthenticatedUserInterface
         if (!$this->clients->contains($client)) {
             $this->clients[] = $client;
             $client->setUser($this);
+        }
+
+        return $this;
+    }
+     /**
+     * @return Collection<int, Admin>
+     */
+    public function getAdmins(): Collection
+    {
+        return $this->admins;
+    }
+
+    public function addAdmins(Admin $admin): self
+    {
+        if (!$this->admins->contains($admin)) {
+            $this->admins[] = $admin;
+            $admin->setUser($this);
         }
 
         return $this;

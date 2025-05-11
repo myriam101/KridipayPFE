@@ -36,6 +36,17 @@ class ClientController extends AbstractController
         return $this->json($clients, 200, [], ['groups' => 'client:read']);
     }
 
+ #[Route('/one/{id}', name: 'one_client', methods: ['GET'])]
+    public function getClientById(ClientRepository $clientRepository,int $id): JsonResponse
+    {
+        $client = $clientRepository->findOneBy(['id' => $id]);
+ if (!$client) {
+            return new JsonResponse(['error' => 'Client not found'], 404);
+        }
+        return $this->json($client, 200, [], ['groups' => 'client:read']);
+
+        }
+
     #[Route('/email/{email}', name: 'get_client_by_email', methods: ['GET'])]
     public function getClientByEmail(string $email, UserRepository $userRepository, ClientRepository $clientRepository): JsonResponse
     {

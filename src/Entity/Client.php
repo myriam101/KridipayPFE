@@ -20,7 +20,6 @@ class Client
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(['client:read'])]
     private ?string $adress = null;
-    
 
     #[ORM\Column(nullable: true)]
     #[Groups(['client:read'])]

@@ -28,6 +28,13 @@ class Simulation
     #[ORM\Column]
     private ?float $reslut_lt = null;
 
+    #[ORM\Column(type: "string", length: 20)]
+    private $periode_use = null;  
+
+    const MONTH = 'month';
+    const THREE_MONTHS = 'three_months';
+    const YEAR = 'year';
+
     #[ORM\ManyToOne(targetEntity: Product::class)]
     #[ORM\JoinColumn(name: "id_product", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?Product $product = null;
@@ -129,5 +136,15 @@ class Simulation
     $this->result_khw = $kwh;
     return $this;
 }
+ public function getPeriodeUse(): ?string
+    {
+        return $this->periode_use;
+    }
+
+    public function setPeriodeUse(string $periode_use): self
+    {
+        $this->periode_use = $periode_use;
+        return $this;
+    }
 
 }

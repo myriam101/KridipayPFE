@@ -25,7 +25,7 @@ use App\Entity\Enum\Type;
 use App\Repository\ClientRepository;
 use App\Repository\CartRepository;
 use App\Entity\CartContainer;
-
+use App\Repository\ProviderRepository;
 use App\Repository\UserRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -185,7 +185,7 @@ public function addProduct2ByProvider(
 #[Route('/provider/{id}/add-product', name: 'add_product_by_provider', methods: ['POST'])]
 public function addProductByProvider(
     Request $request,
-    UserRepository $providerRepository,
+    ProviderRepository $providerRepository,
     CategoryRepository $categoryRepository,
     CatalogRepository $catalogRepository,
     int $id
@@ -265,14 +265,6 @@ public function addProductByProvider(
         } else {
             $feature->setType(Type::none); // Valeur par défaut
         }
-        
-
-
-
-
-
-
-
         $feature->setProduct($product); // lien vers le produit
 
         $this->entityManager->persist($feature);
@@ -343,6 +335,76 @@ public function addProductByProvider(
 
         return new JsonResponse($productData);
     }
+
+    #[Route('/product/{productId}', name: 'get_product_details', methods: ['GET'])]
+public function getProductDetails(
+    int $productId,
+    EntityManagerInterface $em
+): JsonResponse {
+    // Récupérer le produit à partir de son ID
+    $product = $em->getRepository(Product::class)->find($productId);
+
+    if (!$product) {
+        return new JsonResponse(['error' => 'Product not found'], 404);
+    }
+
+    // Récupérer les caractéristiques du produit (Feature)
+    $feature = $product->getFeature();
+    $featureData = [];
+
+    if ($feature) {
+        // Vérification plus stricte : exclure les valeurs nulles ou égales à 0
+        if ($feature->getWeight() && $feature->getWeight() !== 0) $featureData['weight'] = $feature->getWeight();
+        if ($feature->getNoise() && $feature->getNoise() !== 0) $featureData['noise'] = $feature->getNoise();
+        if ($feature->getPower() && $feature->getPower() !== 0) $featureData['power'] = $feature->getPower();
+        if ($feature->getConsumptionLiter() && $feature->getConsumptionLiter() !== 0) $featureData['consumption_liter'] = $feature->getConsumptionLiter();
+        if ($feature->getConsumptionWatt() && $feature->getConsumptionWatt() !== 0) $featureData['consumption_watt'] = $feature->getConsumptionWatt();
+        if ($feature->getHdrConsumption() && $feature->getHdrConsumption() !== 0) $featureData['hdr_consumption'] = $feature->getHdrConsumption();
+        if ($feature->getSdrConsumption() && $feature->getSdrConsumption() !== 0) $featureData['sdr_consumption'] = $feature->getSdrConsumption();
+        if ($feature->getCapacity() && $feature->getCapacity() !== 0) $featureData['capacity'] = $feature->getCapacity();
+        if ($feature->getDimension() && $feature->getDimension() !== 0) $featureData['dimension'] = $feature->getDimension();
+        if ($feature->getVolumeRefrigeration() && $feature->getVolumeRefrigeration() !== 0) $featureData['volume_refrigeration'] = $feature->getVolumeRefrigeration();
+        if ($feature->getVolumeFreezer() && $feature->getVolumeFreezer() !== 0) $featureData['volume_freezer'] = $feature->getVolumeFreezer();
+        if ($feature->getVolumeCollect() && $feature->getVolumeCollect() !== 0) $featureData['volume_collect'] = $feature->getVolumeCollect();
+        if ($feature->getSeer() && $feature->getSeer() !== 0) $featureData['seer'] = $feature->getSeer();
+        if ($feature->getScop() && $feature->getScop() !== 0) $featureData['scop'] = $feature->getScop();
+        if ($feature->getCycleDuration() && $feature->getCycleDuration() !== 0) $featureData['cycle_duration'] = $feature->getCycleDuration();
+        if ($feature->getNbrCouvert() && $feature->getNbrCouvert() !== 0) $featureData['nbr_couvert'] = $feature->getNbrCouvert();
+        if ($feature->getNbBottle() && $feature->getNbBottle() !== 0) $featureData['nb_bottle'] = $feature->getNbBottle();
+        if ($feature->getResolution() && $feature->getResolution() !== 0) $featureData['resolution'] = $feature->getResolution();
+        if ($feature->getDiagonal() && $feature->getDiagonal() !== 0) $featureData['diagonal'] = $feature->getDiagonal();
+        if ($feature->getDebit() && $feature->getDebit() !== 0) $featureData['debit'] = $feature->getDebit();
+
+        // Ajouter les enums si leur valeur n'est pas 'NONE'
+        $energyClass = $feature->getEnergyClass()?->value;
+        if ($energyClass && $energyClass !== 'NONE') {
+            $featureData['energy_class'] = $energyClass;
+        }
+
+        $type = $feature->getType()?->value;
+        if ($type && $type !== 'none') {
+            $featureData['type'] = $type;
+        }
+    }
+
+    // Structurer les données du produit
+    $productData = [
+        'id' => $product->getId(),
+        'name' => $product->getName(),
+        'description' => $product->getDescription(),
+        'short_description' => $product->getShortDescription(),
+        'reference' => $product->getReference(),
+        'brand' => $product->getBrand(),
+        'bonifpoint' => $product->getBonifpoint(),
+        'bonifvisible' => $product->getBonifvisible(),
+        'features' => !empty($featureData) ? $featureData : null,
+    ];
+
+    // Retourner la réponse JSON avec les détails du produit
+    return new JsonResponse($productData);
+}
+
+
     #[Route('/catalog/{catalogId}/category/{categoryId}/all', name: 'get_products_by_catalog_and_category', methods: ['GET'])]
     public function getProductsByCatalogAndCategory(
         int $catalogId,
@@ -551,8 +613,11 @@ public function removeProductFromCart(int $clientId, int $productId): Response
     $this->entityManager->remove($cartContainer);
     $this->entityManager->flush();
 
-    return new Response('Produit supprimé du panier avec succès', Response::HTTP_OK);
-}
+// Return a structured JSON response
+return new JsonResponse([
+    'status' => 'success',
+    'message' => 'Produit supprimé du panier avec succès'
+], Response::HTTP_OK);}
 
 
 }

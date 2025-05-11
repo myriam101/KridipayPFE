@@ -41,7 +41,7 @@ class SimulationController extends AbstractController
     ): Response {
         $data = json_decode($request->getContent(), true);
     
-        if (!$data || !isset($data['client_id'], $data['product_id'], $data['duration_use'], $data['nbr_use'])) {
+        if (!$data || !isset($data['client_id'], $data['product_id'], $data['duration_use'], $data['nbr_use'],$data['periode_use'])) {
             return new Response(json_encode(['message' => 'Missing data']), 400, ['Content-Type' => 'application/json']);
         }
     
@@ -57,9 +57,10 @@ class SimulationController extends AbstractController
         $simulation->setIdClient($client);
         $simulation->setNbrUse((int)$data['nbr_use']);
         $simulation->setDurationUse((int)$data['duration_use']);
+        $simulation->setPeriodeUse((string)$data['periode_use']);
     
     
-        // 🔁 Appel à la méthode d’estimation
+        //Appel à la méthode d’estimation
         $designation = $product->getIdCategory()->getDesignation();
         $feature = $product->getFeature();
     
@@ -69,10 +70,11 @@ class SimulationController extends AbstractController
             $simulation->getDurationUse(),
             $feature->getConsumptionWatt(),
             $feature->getConsumptionLiter(),
-            $feature->getPower()
+            $feature->getPower(),
+            $simulation->getPeriodeUse()
         );
         $simulation->setResultKhw($estimated['kwh']);
-$simulation->setResultlt($estimated['litres']);
+        $simulation->setResultlt($estimated['litres']);
 
 
         $em->persist($simulation);
@@ -85,6 +87,7 @@ $simulation->setResultlt($estimated['litres']);
             'duration_use' => $simulation->getDurationUse(),
             'nbr_use' => $simulation->getNbrUse(),
             'designation'=>$product->getIdCategory()->getDesignation(),
+            'periode_use'=>$simulation->getPeriodeUse(),
             'estimated_consumption' => $estimated // <-- kWh et litres
         ];
     
@@ -124,6 +127,7 @@ $simulation->setResultlt($estimated['litres']);
                 $product->getFeature()->getConsumptionWatt(),
                 $product->getFeature()->getConsumptionLiter(),
                 $product->getFeature()->getPower(),
+                $simulation->getPeriodeUse()
             );
     
             return [
@@ -132,6 +136,7 @@ $simulation->setResultlt($estimated['litres']);
                 'product_name' => $product->getName(),
                 'duration_use' => $simulation->getDurationUse(),
                 'nbr_use' => $simulation->getNbrUse(),
+                'periode_use'=>$simulation->getPeriodeUse(),
                 'estimated_kWh' => $estimatedKWh
             ];
         }, $simulations);
@@ -150,10 +155,16 @@ public function estimateEnergyConsumptionFromDesignation(
     ?float $consumptionPerCycle,
     ?float $consoLitres,
     ?float $powerWatts,
-    int $periodDays = 30
-): array {
+string $periodKey
+    ): array {
     $durationHours = $durationMinutes !== null ? $durationMinutes / 60 : 0;
+// Vérifier que periodKey est valide
+    if (is_null($periodKey)) {
+        throw new \InvalidArgumentException("La période est invalide.");
+    }
 
+    // Utilise la fonction pour obtenir les jours
+    $periodInDays = $this->getDaysFromPeriod($periodKey);
     // Designations avec consommation par cycle (eau + énergie)
     $byCycle = [
         Designation::LAVE_LINGE,
@@ -187,23 +198,23 @@ public function estimateEnergyConsumptionFromDesignation(
     if (in_array($designation, $byCycle, true)) {
         if ($consumptionPerCycle !== null) {
             // consommation pour 100 cycles → on divise par 100
-            $kwh = ($consumptionPerCycle / 100) * $usagePerDay * $periodDays;
+            $kwh = ($consumptionPerCycle / 100) * $usagePerDay * $periodInDays;
         }
         if ($consoLitres !== null) {
-            $litres = ($consoLitres / 100) * $usagePerDay * $periodDays;
+            $litres = ($consoLitres / 100) * $usagePerDay * $periodInDays;
         }
     }
     
 
     // Par durée
     if (in_array($designation, $byDuration, true) && $powerWatts !== null && $durationMinutes !== null) {
-        $kwh = ($powerWatts / 1000) * ($durationMinutes / 60) * $usagePerDay * $periodDays;
+        $kwh = ($powerWatts / 1000) * ($durationMinutes / 60) * $usagePerDay * $periodInDays;
 
     }
 
     // Toujours actif
     if (in_array($designation, $alwaysOn, true) && $powerWatts !== null) {
-        $totalHours = 24 * $periodDays;
+        $totalHours = 24 * $periodInDays;
         $kwh = ($powerWatts / 1000) * $totalHours;
     }
 
@@ -211,6 +222,14 @@ public function estimateEnergyConsumptionFromDesignation(
         'kwh' => round($kwh, 2),
         'litres' => round($litres, 2),
     ];
+}
+public function getDaysFromPeriod(string $period): int
+{
+    return match ($period) {
+        Simulation::MONTH => 30,
+        Simulation::THREE_MONTHS => 90,
+        Simulation::YEAR => 365
+        };
 }
 
 #[Route('/simulation/{id}/water-bill', name: 'app_simulation_water_bill', methods: ['GET'])]
