@@ -43,28 +43,26 @@ class Simulation
     #[ORM\JoinColumn(name: "id_client", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?Client $client = null;
     
-     #[ORM\OneToMany(mappedBy: "simulation", targetEntity: EnergyBill::class, cascade: ["remove"])]
-     private Collection $energyBills;
- 
-     public function __construct()
-     {
-         $this->energyBills = new ArrayCollection();
-     }
+    #[ORM\OneToOne(mappedBy: "simulation", targetEntity: EnergyBill::class, cascade: ["persist", "remove"])]
+private ?EnergyBill $energyBill = null;
 
-     public function getEnergyBills(): Collection
-    {
-        return $this->energyBills;
+public function getEnergyBill(): ?EnergyBill
+{
+    return $this->energyBill;
+}
+
+public function setEnergyBill(?EnergyBill $energyBill): static
+{
+    $this->energyBill = $energyBill;
+
+    // synchronisation automatique
+    if ($energyBill !== null && $energyBill->getSimulation() !== $this) {
+        $energyBill->setSimulation($this);
     }
-    public function addEnergyBill(EnergyBill $energyBill): static
-    {
-        if (!$this->energyBills->contains($energyBill)) {
-            $this->energyBills[] = $energyBill;
-            $energyBill->setSimulation($this);
-        }
-    
-        return $this;
-    }
- 
+
+    return $this;
+}
+
    
     public function getId(): ?int
     {

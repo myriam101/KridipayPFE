@@ -27,26 +27,22 @@ class EnergyBill
     #[ORM\Column]
     private ?float $amount_water = null;
 
-    #[ORM\Column(type: Types::STRING, enumType: BillCategory::class)] 
-    private BillCategory $bill_category;
+   #[ORM\ManyToOne]
+private ?PriceElectricity $priceElectricity = null;
 
-    #[ORM\OneToOne(targetEntity: PriceWater::class, inversedBy: "energyBill")]
-    #[ORM\JoinColumn(name: "price_water_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
-    private ?PriceWater $priceWater = null;
- 
+#[ORM\ManyToOne]
+private ?PriceWater $priceWater = null;
+
     #[ORM\OneToOne(targetEntity: PriceGaz::class, inversedBy: "energyBill")]
     #[ORM\JoinColumn(name: "price_gaz_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
     private ?PriceGaz $priceGaz = null;
 
-    #[ORM\OneToOne(targetEntity: PriceElectricity::class, inversedBy: "energyBill")]
-    #[ORM\JoinColumn(name: "price_electricity_id", referencedColumnName: "id", nullable: true, onDelete: "SET NULL")]
-    private ?PriceElectricity $priceElectricity = null;
-
-
-    #[ORM\ManyToOne(targetEntity: Simulation::class, inversedBy: "energyBills")]
-    #[ORM\JoinColumn(name: "simulation_id", referencedColumnName: "id", nullable: false)]
-    private ?Simulation $simulation = null;
     
+
+   #[ORM\OneToOne(targetEntity: Simulation::class, inversedBy: "energyBill")]
+#[ORM\JoinColumn(name: "simulation_id", referencedColumnName: "id", nullable: false, unique: true)]
+private ?Simulation $simulation = null;
+ 
     public function getSimulation(): ?Simulation
     {
         return $this->simulation;
@@ -107,16 +103,6 @@ class EnergyBill
     {
         $this->amount_water = $amount_water;
 
-        return $this;
-    }
-    public function getBillcategory(): BillCategory
-    {
-        return $this->bill_category;
-    }
-
-    public function setBillcategory(BillCategory $bill_category): self
-    {
-        $this->bill_category = $bill_category;
         return $this;
     }
   

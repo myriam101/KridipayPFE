@@ -57,7 +57,6 @@ class Feature
 
     #[ORM\Column]
     private ?float $scop = null;
-
     
     #[ORM\Column]
     private ?int $cycle_duration = null;

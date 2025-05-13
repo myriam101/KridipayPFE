@@ -22,9 +22,6 @@ class PriceWater
     #[ORM\Column(type: Types::STRING, enumType: TrancheEau::class)] 
     private TrancheEau $tranche_eau;
 
-    #[ORM\OneToOne(targetEntity: EnergyBill::class, mappedBy: "priceWater")]
-    private ?EnergyBill $energyBill = null;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -51,14 +48,5 @@ class PriceWater
         $this->tranche_eau = $tranche_eau;
         return $this;
     }
-    public function getEnergyBill(): ?EnergyBill
-    {
-        return $this->energyBill;
-    }
-
-    public function setEnergyBill(?EnergyBill $energyBill): static
-    {
-        $this->energyBill = $energyBill;
-        return $this;
-    }
+  
 }
