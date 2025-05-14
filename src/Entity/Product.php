@@ -55,11 +55,7 @@ class Product
     #[ORM\OneToOne(targetEntity: Feature::class, mappedBy: "product", cascade: ["remove"])]
     private ?Feature $feature = null;
 
-    #[ORM\ManyToOne(inversedBy: 'produits')]
-    #[ORM\JoinColumn(name: 'id_provider', referencedColumnName: 'id',nullable: true)]
-    private ?User $provider = null;
-
-    /**
+     /**
      * @var Collection<int, Productcatalog>
      */
     #[ORM\OneToMany(targetEntity: ProductCatalog::class, mappedBy: 'product')]
@@ -243,17 +239,6 @@ class Product
                 $productCatalog->setProduct(null);
             }
         }
-
-        return $this;
-    }
- public function getProvider(): ?User
-    {
-        return $this->provider;
-    }
-
-    public function setProvider(?User $provider): static
-    {
-        $this->provider = $provider;
 
         return $this;
     }

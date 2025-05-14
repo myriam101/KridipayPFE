@@ -14,6 +14,7 @@ class Provider
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['provider:read'])]
     private ?int $id_provider = null;
 
     #[ORM\Column(length: 128)]

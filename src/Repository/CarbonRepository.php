@@ -155,7 +155,7 @@ public function setAllCarbonVisibleToOne()
 }
 
  
-// Méthode pour calculer l'impact carbone d'un produit en prenant l'ID du produit
+//**  Méthode pour calculer l'impact carbone d'un produit en prenant l'ID du produit*/
 public function calculateCarbonImpactByProductId(int $productId): float
 {
     $product = $this->getEntityManager()->getRepository(Product::class)->find($productId);
@@ -204,7 +204,7 @@ private function calculateBadge(float $carbonValue, array $carbonValues): Badge
 
 public function assignBadgeToProduct(Product $product, float $carbonValue): void
 {
-    $categoryId = $product->getIdCategory(); // Assurez-vous que getCategory() retourne bien une entité
+    $categoryId = $product->getIdCategory();
 
     // Récupérer toutes les empreintes carbone de la catégorie
     $productsInCategory = $this->createQueryBuilder('c')
@@ -238,7 +238,7 @@ public function recalculateBadgesAfterDeletion(int $categoryId): void
         ->getResult();
 
     if (count($productsInCategory) === 0) {
-        return; // Aucun produit restant, pas de badge à attribuer
+        return; 
     }
 
     // Recalcul des quartiles

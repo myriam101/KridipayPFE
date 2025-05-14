@@ -27,6 +27,8 @@ class Cart
     const STATUS_PENDING = 'pending';
     const STATUS_VALIDATED = 'validated';
     const STATUS_CANCELLED = 'cancelled';
+    const STATUS_WAITING_VALIDATION = 'waiting';
+
   
     #[ORM\OneToMany(mappedBy: 'cart', targetEntity: CartContainer::class)]
     private Collection $cartContainers;

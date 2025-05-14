@@ -122,6 +122,24 @@ $montantEau = $tarifEau ? ($litres / 1000) * $tarifEau->getPrice() : 0;
     ]);
 }
 
+#[Route('/get/{simulationId}', name: 'get_energy_bill', methods: ['GET'])]
+public function getEnergyBill(int $simulationId, EnergyBillRepository $billRepository): JsonResponse
+{
+    $bill = $billRepository->findOneBy(['simulation' => $simulationId]);
+
+    if (!$bill) {
+        return new JsonResponse(['error' => 'Aucune facture trouvée pour cette simulation.'], 404);
+    }
+
+    $simulation = $bill->getSimulation();
+
+    return new JsonResponse([
+        'montant_total' => $bill->getAmountBill(),
+        'montant_electricite' => $bill->getAmountElectr(),
+        'montant_eau' => $bill->getAmountWater()
+        ]);
+}
+
 
 
 }

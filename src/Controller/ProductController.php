@@ -174,7 +174,6 @@ public function addProduct2ByProvider(
     $product->setBrand($data['brand'] ?? '');
     $product->setBonifpoint($data['bonifpoint'] ?? 0);
     $product->setBonifvisible($data['bonifvisible'] ?? true);
-    $product->setProvider($provider);
     $product->setIdCategory($category);
 
     $this->entityManager->persist($product);
@@ -219,7 +218,6 @@ public function addProductByProvider(
     $product->setBrand($data['brand'] ?? '');
     $product->setBonifpoint($data['bonifpoint'] ?? 0);
     $product->setBonifvisible($data['bonifvisible'] ?? false);
-    $product->setProvider($provider);
     $product->setIdCategory($category);
   // 👇 Lien vers le catalogue
   if ($catalog) {
@@ -460,164 +458,5 @@ public function getProductDetails(
         // Retourner les produits sous forme JSON
         return $this->json($products, 200);
     }
-    #[Route('/cart/add', name: 'add_to_cart', methods: ['POST'])]
-public function addToCart(Request $request, EntityManagerInterface $em): Response
-{
-    $data = json_decode($request->getContent(), true);
-
-    if (!isset($data['client_id'], $data['product_id'])) {
-        return new JsonResponse(['message' => 'Missing client_id or product_id'], 400);
-    }
-
-    $clientId = $data['client_id'];
-    $productId = $data['product_id'];
-
-    $client = $em->getRepository(Client::class)->find($clientId);
-    $product = $em->getRepository(Product::class)->find($productId);
-
-    if (!$client || !$product) {
-        return new JsonResponse(['message' => 'Client or Product not found'], 404);
-    }
-
-    // Récupération ou création du panier en attente
-    $cart = $em->getRepository(Cart::class)->findOneBy([
-        'id_client' => $client,
-        'status' => Cart::STATUS_PENDING,
-    ]);
-
-    if (!$cart) {
-        $cart = new Cart();
-        $cart->setIdClient($client);
-        $cart->setCreatedAt(new \DateTime());
-        $cart->setStatus(Cart::STATUS_PENDING);
-        $em->persist($cart);
-    }
-
-    // Vérifier si le produit est déjà dans le panier
-    $existingContainer = $em->getRepository(CartContainer::class)->findOneBy([
-        'cart' => $cart,
-        'product' => $product,
-        'status' => CartContainer::STATUS_PENDING,
-    ]);
-
-    if ($existingContainer) {
-        // Incrémenter la quantité si déjà présent
-        $existingContainer->setQuantity($existingContainer->getQuantity() + 1);
-        $em->persist($existingContainer);
-    } else {
-        // Ajouter le produit avec une quantité de 1
-        $container = new CartContainer();
-        $container->setCart($cart);
-        $container->setProduct($product);
-        $container->setStatus(CartContainer::STATUS_PENDING);
-        $container->setQuantity(1);
-        $em->persist($container);
-    }
-
-    $em->flush();
-
-    // Comptage des produits dans le panier mis à jour
-    $productCount = 0;
-    foreach ($cart->getCartContainers() as $c) {
-        if ($c->getStatus() === CartContainer::STATUS_PENDING) {
-            $productCount += $c->getQuantity();
-        }
-    }
-
-    return new JsonResponse([
-        'message' => 'Product added to cart',
-        'cart_product_count' => $productCount
-    ], 201);
-}
-    
-    #[Route('/cart/count/{clientId}', name: 'cart_product_count', methods: ['GET'])]
-public function getCartProductCount(int $clientId, EntityManagerInterface $em): JsonResponse
-{
-    $client = $em->getRepository(Client::class)->find($clientId);
-
-    if (!$client) {
-        return new JsonResponse(['message' => 'Client not found'], 404);
-    }
-
-    $cart = $em->getRepository(Cart::class)->findOneBy([
-        'id_client' => $client,
-        'status' => Cart::STATUS_PENDING,
-    ]);
-
-    $count = 0;
-    if ($cart) {
-        foreach ($cart->getCartContainers() as $c) {
-            if ($c->getStatus() === CartContainer::STATUS_PENDING) {
-                $count += $c->getQuantity();
-            }
-        }
-    }
-
-    return new JsonResponse(['count' => $count]);
-}
-#[Route('/cart/details/{clientId}', name: 'get_cart_details', methods: ['GET'])]
-public function getCartDetails(int $clientId, EntityManagerInterface $em): JsonResponse
-{
-    $client = $em->getRepository(Client::class)->find($clientId);
-
-    if (!$client) {
-        return new JsonResponse(['message' => 'Client not found'], 404);
-    }
-
-    $cart = $em->getRepository(Cart::class)->findOneBy([
-        'id_client' => $client,
-        'status' => Cart::STATUS_PENDING,
-    ]);
-
-    if (!$cart) {
-        return new JsonResponse(['message' => 'No pending cart found'], 404);
-    }
-
-    $details = [];
-
-    foreach ($cart->getCartContainers() as $container) {
-        if ($container->getStatus() === CartContainer::STATUS_PENDING) {
-            $product = $container->getProduct();
-            $details[] = [
-                'product_id' => $product->getId(),
-                'name' => $product->getName(),
-                'brand'=>$product->getBrand(),
-                'quantity' => $container->getQuantity(),
-            ];
-        }
-    }
-
-    return new JsonResponse($details);
-}
-#[Route('/cart/{clientId}/remove/{productId}', name: 'remove_product_from_cart', methods: ['DELETE'])]
-public function removeProductFromCart(int $clientId, int $productId): Response
-{
-    // 1. Récupérer le panier du client
-    $cart = $this->entityManager->getRepository(Cart::class)->findOneBy(['id_client' => $clientId]);
-
-    if (!$cart) {
-        return new Response('Panier non trouvé pour ce client', Response::HTTP_NOT_FOUND);
-    }
-
-    // 2. Trouver le CartContainer qui correspond au produit
-    $cartContainer = $this->entityManager->getRepository(CartContainer::class)->findOneBy([
-        'cart' => $cart,
-        'product' => $productId,
-    ]);
-
-    if (!$cartContainer) {
-        return new Response('Produit non trouvé dans le panier', Response::HTTP_NOT_FOUND);
-    }
-
-    // 3. Supprimer le CartContainer
-    $this->entityManager->remove($cartContainer);
-    $this->entityManager->flush();
-
-// Return a structured JSON response
-return new JsonResponse([
-    'status' => 'success',
-    'message' => 'Produit supprimé du panier avec succès'
-], Response::HTTP_OK);}
-
-
+  
 }

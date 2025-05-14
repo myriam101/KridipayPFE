@@ -36,27 +36,38 @@ class ProviderController extends AbstractController
 
 
     }
+    
+
     #[Route('/email/{email}', name: 'get_provider_by_email', methods: ['GET'])]
-    public function getProviderByEmail(string $email, UserRepository $providerRepository): JsonResponse
+    public function getProviderByEmail(string $email, ProviderRepository $providerRepository,UserRepository $userRepository): JsonResponse
     {
-        $provider = $providerRepository->findOneBy(['email' => $email]);
+        $user = $userRepository->findOneBy(['email' => $email]);
+    
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not found'], 404);
+        }
+    
+        $provider = $providerRepository->findOneBy(['User' => $user]);
     
         if (!$provider) {
-            return new JsonResponse(['error' => 'Provider not found'], 404);
+            return new JsonResponse(['error' => 'provider not found for this user'], 404);
         }
     
         return new JsonResponse([
-            'id' => $provider->getId(),
-            'email' => $provider->getEmail(),
-            // ajoute d’autres infos si besoin
+            'id' => $provider->getIdProvider(),
+            'user_id' => $user->getId(),
+            'email' => $user->getEmail(),
+            // ajoute d'autres infos si besoin
         ]);
     }
+    
     #[Route('/all', name: 'all_provider', methods: ['GET'])]
     public function getAllProvider(ProviderRepository $provider_repository): JsonResponse
     {
         $provider = $provider_repository->findAllProviders();
 
         return $this->json($provider, 200, [], ['groups' => 'provider:read']);
+        
     }
 
 }

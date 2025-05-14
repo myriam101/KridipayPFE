@@ -48,9 +48,9 @@ class CatalogController extends AbstractController
 
     }
     #[Route('/all', name: 'get_all_catalogs', methods: ['GET'])]
-    public function getAllCatalogs(EntityManagerInterface $em): JsonResponse
+    public function getAllCatalogs(): JsonResponse
     {
-        $catalogs = $em->getRepository(Catalog::class)->findAll();
+        $catalogs = $this->entityManager->getRepository(Catalog::class)->findAll();
 
         $data = [];
 
@@ -66,7 +66,7 @@ class CatalogController extends AbstractController
 
    
     #[Route('/{catalogId}/categories', name: 'get_catalog_categories', methods: ['GET'])]
-    public function getCategoriesByCatalog(int $catalogId ): JsonResponse
+    public function getCategoriesByCatalog(int $catalogId): JsonResponse
     {
         $categories = $this->catalogRepository->getCategoriesByCatalog($catalogId);
 

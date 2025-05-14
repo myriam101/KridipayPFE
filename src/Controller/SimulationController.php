@@ -239,15 +239,69 @@ public function calculateWaterBill(
     SimulationRepository $simulationRepository
 ): JsonResponse {
     $periode = $request->query->get('periode', 'mois');
-    $billCategory = BillCategory::from(strtolower($periode));
 
-    $amount = $simulationRepository->calculateWaterBill($simulation, $billCategory);
+    $amount = $simulationRepository->calculateWaterBill($simulation);
 
     return $this->json([
         'montant_facture_eau' => round($amount, 2),
-        'periode' => $billCategory->value,
     ]);
 }
 
+#[Route('/Simulation/add-or-update', name: 'app_simulation_add_or_update', methods: ['POST'])]
+public function addOrUpdateSimulation(Request $request, EntityManagerInterface $em, SimulationRepository $simulationRepo, ProductRepository $productRepo, ClientRepository $clientRepo): JsonResponse
+{
+    $data = json_decode($request->getContent(), true);
+
+    $clientId = $data['client_id'] ?? null;
+    $productId = $data['product_id'] ?? null;
+
+    if (!$clientId || !$productId) {
+        return new JsonResponse(['message' => 'Client ou produit manquant.'], 400);
+    }
+
+    $client = $clientRepo->find($clientId);
+    $product = $productRepo->find($productId);
+
+    if (!$client || !$product) {
+        return new JsonResponse(['message' => 'Client ou produit introuvable.'], 404);
+    }
+
+    // Rechercher une simulation existante
+    $existingSimulation = $simulationRepo->findOneBy([
+        'client' => $client,
+        'product' => $product,
+    ]);
+
+    if ($existingSimulation) {
+        // Mise à jour de la simulation existante
+        $existingSimulation->setDurationUse($data['duration_use']);
+        $existingSimulation->setNbrUse($data['nbr_use']);
+        $existingSimulation->setPeriodeUse($data['periode_use']);
+        $existingSimulation->setDateSimulation(new \DateTime());
+
+        $simulation = $existingSimulation;
+    } else {
+        // Création d'une nouvelle simulation
+        $simulation = new Simulation();
+        $simulation->setIdClient($client);
+        $simulation->setProduct($product);
+        $simulation->setDurationUse($data['duration_use']);
+        $simulation->setNbrUse($data['nbr_use']);
+        $simulation->setPeriodeUse($data['periode_use']);
+
+        $em->persist($simulation);
+    }
+
+    $em->flush();
+
+    // Retourner la simulation (avec ID)
+    return new JsonResponse([
+        'id' => $simulation->getId(),
+        'estimated_consumption' => [
+            'kwh' => $simulation->getEstimatedKwh(),
+            'litres' => $simulation->getEstimatedLitres()
+        ]
+    ], 200);
+}
 
 }

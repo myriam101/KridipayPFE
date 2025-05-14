@@ -194,21 +194,9 @@ class User implements UserInterface,PasswordAuthenticatedUserInterface
     {
         if (!$this->produits->contains($produit)) {
             $this->produits->add($produit);
-            $produit->setProvider($this);
         }
 
         return $this;
     }
 
-    public function removeProduit(Product $produit): static
-    {
-        if ($this->produits->removeElement($produit)) {
-            // set the owning side to null (unless already changed)
-            if ($produit->getProvider() === $this) {
-                $produit->setProvider(null);
-            }
-        }
-
-        return $this;
-    }
 }
