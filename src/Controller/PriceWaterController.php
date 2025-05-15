@@ -11,6 +11,7 @@ use App\Entity\Feature;
 use App\Entity\Enum\BillCategory;
 use App\Entity\Enum\TrancheEau;
 use App\Entity\PriceWater;
+use App\Repository\PriceGazRepository;
 use App\Repository\PriceWaterRepository;
 use App\Repository\SimulationRepository;
 use Psr\Log\LoggerInterface;
@@ -34,87 +35,11 @@ class PriceWaterController extends AbstractController
 
     }
 
-    #[Route('/calculate-bill/{simulationId}', name: 'calculate_bill')]
-    public function calculateBill(int $simulationId, SimulationRepository $simulationRepo, EntityManagerInterface $em): JsonResponse
-    {
-       
-        $simulation = $simulationRepo->find($simulationId);
-
-        if (!$simulation) {
-            return new JsonResponse(['error' => 'Simulation not found'], 404);
-        }
-
-        $product = $simulation->getProduct();
-        $feature = $product->getFeature();
-
-        if (!$feature) {
-            return new JsonResponse(['error' => 'Feature not found for this product'], 404);
-        }
-
-        // Monthly consumption in m³ = liters * nbr_use * 30 (days) / 1000
-        $litersPerUse = $feature->getConsumptionLiter();
-        $nbrUsePerDay = $simulation->getNbrUse();
-        $monthlyConsumption = ($litersPerUse * $nbrUsePerDay * 30) / 1000; // in m³
-
-        // Determine TrancheEau and monthly price
-        $tranche = null;
-        $monthlyPrice = null;
-
-        if ($monthlyConsumption <= 20 / 3) {
-            $tranche = TrancheEau::ZERO_TWENTY;
-            $monthlyPrice = 0.200 / 3;
-        } elseif ($monthlyConsumption <= 40 / 3) {
-            $tranche = TrancheEau::TWENTY_ONE_FORTY;
-            $monthlyPrice = 0.740 / 3;
-        } elseif ($monthlyConsumption <= 70 / 3) {
-            $tranche = TrancheEau::FORTY_ONE_SEVENTY;
-            $monthlyPrice = 1.040 / 3;
-        } elseif ($monthlyConsumption <= 100 / 3) {
-            $tranche = TrancheEau::SEVENTY_ONE_HUNDRED;
-            $monthlyPrice = 1.490 / 3;
-        } elseif ($monthlyConsumption <= 150 / 3) {
-            $tranche = TrancheEau::HUNDRED_ONE_HUNDRED_FIFTY;
-            $monthlyPrice = 1.770 / 3;
-        } else {
-            $tranche = TrancheEau::HUNDRED_FIFTY_PLUS;
-            $monthlyPrice = 2.310 / 3;
-        }
-
-        // Create PriceWater
-        $priceWater = new PriceWater();
-        $priceWater->setTrancheEau($tranche);
-        $priceWater->setPrice($monthlyPrice);
-
-        $em->persist($priceWater);
-
-        // Create EnergyBill
-        $energyBill = new EnergyBill();
-        $energyBill->setAmountWater($monthlyConsumption * $monthlyPrice);
-        $energyBill->setAmountElectr(0);
-        $energyBill->setAmountGaz(0);
-        $energyBill->setAmountBill($energyBill->getAmountWater()); // total = only water for now
-        $energyBill->setBillCategory(BillCategory::TRIMESTRE);
-        $energyBill->setSimulation($simulation);
-        $energyBill->setPriceWater($priceWater); // associate PriceWater
-
-        $em->persist($energyBill);
-        $this->entityManager->flush(); // this will save both entities, assigning IDs
-
-        return new JsonResponse([
-            'success' => true,
-            'amount_water' => $energyBill->getAmountWater(),
-            'tranche' => $tranche->value,
-            'price_per_m3' => $monthlyPrice,
-            'price_water_id' => $priceWater->getId(),
-            'energy_bill_id' => $energyBill->getId(),
-        ]);
-    }
     
     #[Route('/add', name: 'add_price_water', methods: ['POST'])]
     public function addPriceWater(
         Request $request,
         PriceWaterRepository $repo,
-        EntityManagerInterface $em
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
     
@@ -132,7 +57,7 @@ class PriceWaterController extends AbstractController
         $priceWater->setTrancheEau($tranche);
         $priceWater->setPrice($data['price']);
     
-        $em->persist($priceWater);
+        $this->entityManager->persist($priceWater);
         $this->entityManager->flush();
     
         return new JsonResponse([
@@ -183,7 +108,13 @@ class PriceWaterController extends AbstractController
     }
     
    
+#[Route('/all', name: 'all_water', methods: ['GET'])]
+    public function getAllWater(PriceWaterRepository $pr): JsonResponse
+    {
+        $water = $pr->findAll();
 
+        return $this->json($water, 200, [], ['groups' => 'water:read']);
+    }
     
 
 }

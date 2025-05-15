@@ -23,6 +23,10 @@ class User implements UserInterface,PasswordAuthenticatedUserInterface
     #[Groups(['client:read','provider:read'])]
     private ?string $name = null;
 
+     #[ORM\Column(length: 255)]
+    #[Groups(['client:read','provider:read'])]
+    private ?string $last_name = null;
+
     #[ORM\Column(length: 255)]
     #[Groups(['client:read','provider:read'])]
     private ?string $username = null;
@@ -136,6 +140,17 @@ class User implements UserInterface,PasswordAuthenticatedUserInterface
     public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
+    }
+      public function getLastName(): ?string
+    {
+        return $this->last_name;
+    }
+
+    public function setLastName(string $last_name): static
+    {
+        $this->last_name = $last_name;
 
         return $this;
     }

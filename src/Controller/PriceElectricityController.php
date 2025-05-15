@@ -40,7 +40,7 @@ public function addElectricityPrice(
         return new JsonResponse(['error' => 'Invalid JSON'], 400);
     }
 
-    $required = ['tax', 'price_day', 'price_night', 'price_rush', 'periode_use', 'sector', 'tranche_elect'];
+    $required = ['price', 'sector', 'tranche_elect'];
     foreach ($required as $field) {
         if (!isset($data[$field])) {
             return new JsonResponse(['error' => "Missing field: $field"], 400);
@@ -48,7 +48,6 @@ public function addElectricityPrice(
     }
 
     try {
-        $periodeUse = PeriodeUse::from($data['periode_use']);
         $sector = Sector::from($data['sector']);
         $tranche = TrancheElect::from($data['tranche_elect']);
     } catch (\ValueError $e) {
@@ -60,21 +59,16 @@ public function addElectricityPrice(
         return new JsonResponse(['error' => 'Un tarif pour cette tranche et ce secteur existe déjà.'], 400);
     }
 
-    $price = new PriceElectricity();
-    $price->setTrancheElect($tranche);
-    $price->setSector($sector);
-    $price->setPeriodeUse($periodeUse);
-    $price->setTax((float) $data['tax']);
-    $price->setPriceDay((float) $data['price_day']);
-    $price->setPriceNight((float) $data['price_night']);
-    $price->setPriceRush((float) $data['price_rush']);
-
-    $this->entityManager->persist($price);
+    $price_elect = new PriceElectricity();
+    $price_elect->setTrancheElect($tranche);
+    $price_elect->setSector($sector);
+    $price_elect->setPrice($data['price']);
+    $this->entityManager->persist($price_elect);
     $this->entityManager->flush();
 
     return new JsonResponse([
         'success' => true,
-        'id' => $price->getId(),
+        'id' => $price_elect->getId(),
         'message' => 'Tarif électricité ajouté avec succès.'
     ]);
 }
@@ -103,11 +97,7 @@ public function updatePriceElectricity(
 
     $priceElectricity->setTrancheElect($tranche);
     $priceElectricity->setSector($sector);
-    $priceElectricity->setPriceDay($data['price_day']);
-    $priceElectricity->setPriceNight($data['price_night']);
-    $priceElectricity->setPriceRush($data['price_rush']);
-    $priceElectricity->setTax($data['tax']);
-    $priceElectricity->setPeriodeUse(PeriodeUse::from($data['periode_use']));
+    $priceElectricity->setPrice($data['price']);
 
     $this->entityManager->flush();
 
@@ -117,5 +107,12 @@ public function updatePriceElectricity(
     ]);
 }
 
+  
+#[Route('/all', name: 'all_elect', methods: ['GET'])]
+    public function getAllElect(PriceElectricityRepository $pr): JsonResponse
+    {
+        $elect = $pr->findAll();
 
+        return $this->json($elect, 200, [], ['groups' => 'elect:read']);
+    }
 }

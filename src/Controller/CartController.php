@@ -281,7 +281,6 @@ public function getWaitingCarts(int $clientId): JsonResponse
         return new JsonResponse(['message' => 'Client non trouvé'], 404);
     }
 
-    // Récupérer les paniers du client avec le statut 'waiting'
     $carts = $this->entityManager->getRepository(Cart::class)->findBy([
         'id_client' => $client,
         'status' => Cart::STATUS_WAITING_VALIDATION
@@ -310,6 +309,8 @@ public function getWaitingCarts(int $clientId): JsonResponse
             'cart_id' => $cart->getId(),
             'status' => $cart->getStatus(),
             'products' => $products,
+            'created_at' => $cart->getCreatedAt()?->format('Y-m-d H:i'),
+
         ];
     }
 
@@ -320,7 +321,6 @@ public function getWaitingCarts(int $clientId): JsonResponse
 #[Route('/waiting', name: 'get_all_waiting_carts', methods: ['GET'])]
 public function getAllWaitingCarts(): JsonResponse
 {
-    // Récupérer tous les paniers avec le statut 'waiting'
     $carts = $this->entityManager->getRepository(Cart::class)->findBy([
         'status' => Cart::STATUS_WAITING_VALIDATION,
     ]);
@@ -331,9 +331,8 @@ public function getAllWaitingCarts(): JsonResponse
 
     $cartDetails = [];
 
-    // Récupérer les produits associés à chaque panier
     foreach ($carts as $cart) {
-        $client = $cart->getIdClient(); // Récupérer le client associé au panier
+        $client = $cart->getIdClient(); 
         $products = [];
 
         foreach ($cart->getCartContainers() as $container) {
@@ -350,9 +349,13 @@ public function getAllWaitingCarts(): JsonResponse
         $cartDetails[] = [
             'cart_id' => $cart->getId(),
             'client_id' => $client ? $client->getId() : null,
-            'client_name' => $client ? $client->getUser()->getUsername() : 'Client non trouvé',
+             'username' => $client ? $client->getUser()->getUsername() : 'Client non trouvé',
+            'client_name'=>$client->getUser()->getName(),
+            'client_lastname'=>$client->getUser()->getLastName(),
             'status' => $cart->getStatus(),
             'products' => $products,
+            'created_at' => $cart->getCreatedAt()?->format('Y-m-d H:i'),
+
         ];
     }
 
@@ -372,7 +375,7 @@ public function getAllValidatedCarts(): JsonResponse
     $cartDetails = [];
 
     foreach ($carts as $cart) {
-        $client = $cart->getIdClient(); // Récupérer le client associé au panier
+        $client = $cart->getIdClient(); 
         $products = [];
 
         foreach ($cart->getCartContainers() as $container) {
@@ -389,9 +392,12 @@ public function getAllValidatedCarts(): JsonResponse
         $cartDetails[] = [
             'cart_id' => $cart->getId(),
             'client_id' => $client ? $client->getId() : null,
-            'client_name' => $client ? $client->getUser()->getUsername() : 'Client non trouvé',
+            'username' => $client ? $client->getUser()->getUsername() : 'Client non trouvé',
+            'client_name'=>$client->getUser()->getName(),
+            'client_lastname'=>$client->getUser()->getLastName(),
             'status' => $cart->getStatus(),
             'products' => $products,
+            'created_at' => $cart->getCreatedAt()?->format('Y-m-d H:i'),
         ];
     }
 
@@ -428,9 +434,13 @@ public function getAllCancelledCarts(): JsonResponse
         $cartDetails[] = [
             'cart_id' => $cart->getId(),
             'client_id' => $client ? $client->getId() : null,
-            'client_name' => $client ? $client->getUser()->getUsername() : 'Client non trouvé',
+            'username' => $client ? $client->getUser()->getUsername() : 'Client non trouvé',
+            'client_name'=>$client->getUser()->getName(),
+            'client_lastname'=>$client->getUser()->getLastName(),
             'status' => $cart->getStatus(),
             'products' => $products,
+            'created_at' => $cart->getCreatedAt()?->format('Y-m-d H:i'),
+
         ];
     }
 
@@ -479,6 +489,7 @@ public function getNonPendingCarts(int $clientId): JsonResponse
             'status' => $cart->getStatus(),
             'created_at' => $cart->getCreatedAt()?->format('Y-m-d H:i'),
             'products' => $products,
+
         ];
     }
 

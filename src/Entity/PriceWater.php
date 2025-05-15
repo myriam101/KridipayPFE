@@ -6,6 +6,7 @@ use App\Repository\PriceWaterRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
 use App\Entity\Enum\TrancheEau;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 #[ORM\Entity(repositoryClass: PriceWaterRepository::class)]
@@ -17,9 +18,11 @@ class PriceWater
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['water:read'])]
     private ?float $price = null;
 
     #[ORM\Column(type: Types::STRING, enumType: TrancheEau::class)] 
+    #[Groups(['water:read'])]
     private TrancheEau $tranche_eau;
 
     public function getId(): ?int

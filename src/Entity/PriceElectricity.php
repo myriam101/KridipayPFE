@@ -8,6 +8,7 @@ use Doctrine\DBAL\Types\Types;
 use App\Entity\Enum\PeriodeUse;
 use App\Entity\Enum\Sector;
 use App\Entity\Enum\TrancheElect;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: PriceElectricityRepository::class)]
 class PriceElectricity
@@ -18,12 +19,15 @@ class PriceElectricity
     private ?int $id = null;
 
     #[ORM\Column(type: Types::STRING, enumType: Sector::class)] 
+    #[Groups(['elect:read'])]
     private Sector $sector;
 
     #[ORM\Column(type: Types::STRING, enumType: TrancheElect::class)] 
+    #[Groups(['elect:read'])]
     private TrancheElect $tranche_elect;
 
-     #[ORM\Column]
+    #[ORM\Column]
+    #[Groups(['elect:read'])]
     private ?float $price = null;
 
     public function getId(): ?int
