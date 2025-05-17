@@ -16,6 +16,7 @@ class PriceElectricity
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['elect:read'])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::STRING, enumType: Sector::class)] 
