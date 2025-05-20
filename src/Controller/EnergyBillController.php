@@ -2,20 +2,14 @@
 namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use App\Repository\ProductRepository;
-use App\Repository\CarbonRepository;
 use Psr\Log\LoggerInterface;
 use App\Entity\EnergyBill;
 use App\Entity\Simulation;
-use App\Entity\Enum\BillCategory;
-use App\Entity\Enum\PeriodeUse;
 use App\Entity\Enum\TrancheEau;
-use App\Entity\Enum\Sector;
 use App\Entity\Enum\TrancheElect;
 use App\Repository\EnergyBillRepository;
 use App\Repository\PriceElectricityRepository;
@@ -45,28 +39,22 @@ public function calculateEnergyBill(
 ): JsonResponse {
     $simulation = $simulationRepository->find($id);
     if (!$simulation) {
-        return new JsonResponse(['error' => 'Simulation not found'], 404);
+        return new JsonResponse(['error' => 'Simulation non trouvée'], 404);
     }
 
     $periode = $simulation->getPeriodeUse();
-    $kwh = $simulation->getResultKhw(); // kWh total pour la période
-    $litres = $simulation->getResultlt(); // litres total pour la période
+    $kwh = $simulation->getResultKhw();
+    $litres = $simulation->getResultlt();
     $m3 = $litres / 1000;
 
-    // Vérifie s'il existe déjà une facture
-    $existing = $energyBillRepository->findOneBy(['simulation' => $simulation]);
-    if ($existing) {
-        return new JsonResponse(['error' => 'Une facture existe déjà pour cette simulation.'], 409);
-    }
-
-    // Adaptation de la consommation d'électricité selon la période
+    // Adaptation de la consommation d'électricité
     if ($periode === Simulation::THREE_MONTHS) {
-        $kwh /= 3; // Pour une période trimestrielle, on divise par 3
+        $kwh /= 3;
     } elseif ($periode === Simulation::YEAR) {
-        $kwh /= 12; // Pour une période annuelle, on divise par 12
+        $kwh /= 12;
     }
 
-    // Déterminer la tranche d'électricité
+    // Tarif électricité
     $tarifElect = null;
     foreach (TrancheElect::cases() as $tranche) {
         [$min, $max] = explode('-', str_replace('+', '', $tranche->value) . '-' . PHP_INT_MAX);
@@ -76,18 +64,17 @@ public function calculateEnergyBill(
         }
     }
 
-    // Calcul du montant électricité
-$montantElectricite = $tarifElect ? $kwh * $tarifElect->getPrice() : 0;
+    $montantElectricite = $tarifElect ? $kwh * $tarifElect->getPrice() : 0;
 
-    // Adaptation de la consommation d'eau selon la période
+    // Adaptation eau
     if ($periode === Simulation::MONTH) {
-        $litres *= 3; // Pour une période mensuelle, on multiplie par 3 (pour obtenir la consommation trimestrielle)
+        $litres *= 3;
     } elseif ($periode === Simulation::YEAR) {
-        $litres /= 4; // Pour une période annuelle, on divise par 4 pour obtenir la consommation trimestrielle
+        $litres /= 4;
     }
     $m3 = $litres / 1000;
 
-    // Déterminer la tranche d'eau
+    // Tarif eau
     $tarifEau = null;
     foreach (TrancheEau::cases() as $tranche) {
         [$min, $max] = explode('-', str_replace('+', '', $tranche->value) . '-' . PHP_INT_MAX);
@@ -97,15 +84,18 @@ $montantElectricite = $tarifElect ? $kwh * $tarifElect->getPrice() : 0;
         }
     }
 
-    // Calcul du montant eau
-$montantEau = $tarifEau ? ($litres / 1000) * $tarifEau->getPrice() : 0;
+    $montantEau = $tarifEau ? $m3 * $tarifEau->getPrice() : 0;
 
-    // Enregistrement de la facture
-    $facture = new EnergyBill();
-    $facture->setSimulation($simulation);
+    // Ajout ou mise à jour
+    $facture = $energyBillRepository->findOneBy(['simulation' => $simulation]);
+    if (!$facture) {
+        $facture = new EnergyBill();
+        $facture->setSimulation($simulation);
+    }
+
     $facture->setAmountElectr($montantElectricite);
     $facture->setAmountWater($montantEau);
-    $facture->setAmountGaz(0); // à adapter si besoin
+    $facture->setAmountGaz(0);
     $facture->setAmountBill($montantElectricite + $montantEau);
     if ($tarifElect) $facture->setPriceElectricity($tarifElect);
     if ($tarifEau) $facture->setPriceWater($tarifEau);
@@ -114,11 +104,11 @@ $montantEau = $tarifEau ? ($litres / 1000) * $tarifEau->getPrice() : 0;
     $this->entityManager->flush();
 
     return new JsonResponse([
-        'message' => 'Facture calculée et enregistrée avec succès',
+        'message' => 'Facture enregistrée avec succès' . ($facture->getId() ? ' (mise à jour)' : ''),
         'montant_total' => $facture->getAmountBill(),
         'electricite' => $montantElectricite,
         'eau' => $montantEau,
-        'periode' => $periode
+        'periode' => $periode,
     ]);
 }
 
@@ -140,6 +130,117 @@ public function getEnergyBill(int $simulationId, EnergyBillRepository $billRepos
         ]);
 }
 
+#[Route('/get-cart-bills/{clientId}', name: 'get_cart_bills', methods: ['GET'])]
+public function getCartBills(
+    int $clientId,
+    SimulationRepository $simulationRepo,
+    EnergyBillRepository $billRepo
+): JsonResponse {
+    $simulations = $simulationRepo->findBy(['client' => $clientId]);
+    $result = [];
+
+    foreach ($simulations as $sim) {
+        $bill = $billRepo->findOneBy(['simulation' => $sim]);
+        if ($bill) {
+            $result[] = [
+                'product_id' => $sim->getProduct()->getId(),
+                'amount_bill' => $bill->getAmountBill(),
+                'amount_electricity' => $bill->getAmountElectr(),
+                'amount_water' => $bill->getAmountWater(),
+                'periode' => $sim->getPeriodeUse()
+            ];
+        }
+    }
+
+    return new JsonResponse(['bills' => $result]);
+}
+#[Route('/calculate-bills', name: 'calculate_multiple_energy_bills', methods: ['POST'])]
+public function calculateMultipleEnergyBills(
+    Request $request,
+    SimulationRepository $simulationRepository,
+    PriceElectricityRepository $electricityRepository,
+    PriceWaterRepository $waterRepository,
+    EnergyBillRepository $energyBillRepository,
+): JsonResponse {
+    $data = json_decode($request->getContent(), true);
+    $simulationIds = $data['simulation_ids'] ?? [];
+
+    if (empty($simulationIds) || !is_array($simulationIds)) {
+        return new JsonResponse(['error' => 'Liste d\'ID de simulations manquante ou invalide'], 400);
+    }
+
+    $results = [];
+
+    foreach ($simulationIds as $id) {
+        $simulation = $simulationRepository->find($id);
+        if (!$simulation) {
+            $results[] = ['id' => $id, 'error' => 'Simulation non trouvée'];
+            continue;
+        }
+
+        $periode = $simulation->getPeriodeUse();
+        $kwh = $simulation->getResultKhw();
+        $litres = $simulation->getResultlt();
+
+        // Ajustement selon période
+        if ($periode === Simulation::THREE_MONTHS) $kwh /= 3;
+        elseif ($periode === Simulation::YEAR) $kwh /= 12;
+
+        // Tarif électricité
+        $tarifElect = null;
+        foreach (TrancheElect::cases() as $tranche) {
+            [$min, $max] = explode('-', str_replace('+', '', $tranche->value) . '-' . PHP_INT_MAX);
+            if ($kwh >= (int)$min && $kwh <= (int)$max) {
+                $tarifElect = $electricityRepository->findOneBy(['tranche_elect' => $tranche]);
+                break;
+            }
+        }
+$montantElectricite = $tarifElect ? round($kwh * $tarifElect->getPrice()) : 0;
+
+        // Ajustement eau
+        if ($periode === Simulation::MONTH) $litres *= 3;
+        elseif ($periode === Simulation::YEAR) $litres /= 4;
+        $m3 = $litres / 1000;
+
+        // Tarif eau
+        $tarifEau = null;
+        foreach (TrancheEau::cases() as $tranche) {
+            [$min, $max] = explode('-', str_replace('+', '', $tranche->value) . '-' . PHP_INT_MAX);
+            if ($m3 >= (int)$min && $m3 <= (int)$max) {
+                $tarifEau = $waterRepository->findOneBy(['tranche_eau' => $tranche]);
+                break;
+            }
+        }
+$montantEau = $tarifEau ? round($m3 * $tarifEau->getPrice()) : 0;
+
+        // Création ou mise à jour de la facture
+        $facture = $energyBillRepository->findOneBy(['simulation' => $simulation]) ?? new EnergyBill();
+        $facture->setSimulation($simulation);
+        $facture->setAmountElectr($montantElectricite);
+        $facture->setAmountWater($montantEau);
+        $facture->setAmountGaz(0);
+        $facture->setAmountBill($montantElectricite + $montantEau);
+        if ($tarifElect) $facture->setPriceElectricity($tarifElect);
+        if ($tarifEau) $facture->setPriceWater($tarifEau);
+
+        $this->entityManager->persist($facture);
+
+        $results[] = [
+            'id_simulation' => $simulation->getId(),
+            'montant_total' => $facture->getAmountBill(),
+            'electricite' => $montantElectricite,
+            'eau' => $montantEau,
+            'periode' => $periode,
+        ];
+    }
+
+    $this->entityManager->flush();
+
+    return new JsonResponse([
+        'message' => 'Factures traitées avec succès',
+        'results' => $results,
+    ]);
+}
 
 
 }

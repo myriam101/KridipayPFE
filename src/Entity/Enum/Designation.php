@@ -22,5 +22,25 @@ enum Designation: int
     case TV = 15;
 
 
-
+ public function label(): string
+    {
+        return match($this) {
+            self::LAVE_LINGE => 'Lave linge',
+            self::SECHE_LINGE => 'Sèche linge',
+            self::LAVANTE_SECHANTE => 'Lavante séchante',
+            self::REFRIGERATEUR => 'Réfrigérateur',
+            self::LAVE_VAISSELLE => 'Lave vaisselle',
+            self::FOUR => 'Four',
+            self::CLIMATISEUR => 'Climatiseur',
+            self::CAVE_A_VIN => 'Cave à vin',
+            self::CONGELATEUR => 'Congélateur',
+            self::HOTTE => 'Hotte',
+            self::TABLE_CUISSON => 'Table de cuisson',
+            self::ASPIRATEUR => 'Aspirateur',
+            self::CHAUFFAGE => 'Chauffage',
+            self::CHAUFFE_EAU => 'Chauffe eau',
+            self::CHAUDIERE => 'Chaudière',
+            self::TV => 'TV',
+        };
+    }
 }

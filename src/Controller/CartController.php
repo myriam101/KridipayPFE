@@ -6,31 +6,12 @@ use Symfony\Component\Routing\Attribute\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use App\Repository\ProductRepository;
-use App\Repository\CatalogRepository;
-
 use App\Entity\Product;
-use App\Entity\Catalog;
-use App\Entity\Category;
 use App\Entity\Cart;
 use App\Entity\Client;
-
-
-use App\Entity\Feature;
-
-use App\Repository\CategoryRepository;
-use App\Entity\Enum\Designation;
-use App\Entity\Enum\EnergyClass;
-use App\Entity\Enum\Type;
-use App\Repository\ClientRepository;
-use App\Repository\CartRepository;
 use App\Entity\CartContainer;
-use App\Repository\CartContainerRepository;
-use App\Repository\UserRepository;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Repository\CartRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
-
-
 use Psr\Log\LoggerInterface;
 
 #[Route('/Cart')]
@@ -67,7 +48,6 @@ class CartController extends AbstractController
         return new JsonResponse(['message' => 'Client or Product not found'], 404);
     }
 
-    // Récupération ou création du panier en attente
     $cart = $this->entityManager->getRepository(Cart::class)->findOneBy([
         'id_client' => $client,
         'status' => Cart::STATUS_PENDING,
@@ -81,7 +61,6 @@ class CartController extends AbstractController
         $this->entityManager->persist($cart);
     }
 
-    // Vérifier si le produit est déjà dans le panier
     $existingContainer = $this->entityManager->getRepository(CartContainer::class)->findOneBy([
         'cart' => $cart,
         'product' => $product,
@@ -89,11 +68,11 @@ class CartController extends AbstractController
     ]);
 
     if ($existingContainer) {
-        // Incrémenter la quantité si déjà présent
+
         $existingContainer->setQuantity($existingContainer->getQuantity() + 1);
         $this->entityManager->persist($existingContainer);
     } else {
-        // Ajouter le produit avec une quantité de 1
+
         $container = new CartContainer();
         $container->setCart($cart);
         $container->setProduct($product);
@@ -104,7 +83,6 @@ class CartController extends AbstractController
 
     $this->entityManager->flush();
 
-    // Comptage des produits dans le panier mis à jour
     $productCount = 0;
     foreach ($cart->getCartContainers() as $c) {
         if ($c->getStatus() === CartContainer::STATUS_PENDING) {
@@ -171,6 +149,7 @@ public function getCartDetails(int $clientId, EntityManagerInterface $em): JsonR
                 'name' => $product->getName(),
                 'brand'=>$product->getBrand(),
                 'quantity' => $container->getQuantity(),
+                'category' => $product->getIdCategory()->getDesignation()->label()
             ];
         }
     }
@@ -181,16 +160,14 @@ public function getCartDetails(int $clientId, EntityManagerInterface $em): JsonR
 #[Route('/{clientId}/remove/{productId}', name: 'remove_product_from_cart', methods: ['DELETE'])]
 public function removeProductFromCart(int $clientId, int $productId): Response
 {
-    // 1. Récupérer le panier du client
     $cart = $this->entityManager->getRepository(Cart::class)->findOneBy(['id_client' => $clientId,
-        'status' => Cart::STATUS_PENDING, // Added this condition
+        'status' => Cart::STATUS_PENDING, 
 ]);
 
     if (!$cart) {
         return new Response('Panier non trouvé pour ce client', Response::HTTP_NOT_FOUND);
     }
 
-    // 2. Trouver le CartContainer qui correspond au produit et dont le statut est 'pending'
     $cartContainer = $this->entityManager->getRepository(CartContainer::class)->findOneBy([
         'cart' => $cart,
         'product' => $productId,
@@ -201,11 +178,9 @@ public function removeProductFromCart(int $clientId, int $productId): Response
         return new Response('Produit non trouvé dans le panier ou produit déjà validé', Response::HTTP_NOT_FOUND);
     }
 
-    // 3. Supprimer le CartContainer
     $this->entityManager->remove($cartContainer);
     $this->entityManager->flush();
 
-    // Return a structured JSON response
     return new JsonResponse([
         'status' => 'success',
         'message' => 'Produit supprimé du panier avec succès'
@@ -496,5 +471,34 @@ public function getNonPendingCarts(int $clientId): JsonResponse
     return new JsonResponse($cartDetails);
 }
 
+
+#[Route('/validate/{id}', name: 'validate_cart', methods: ['PUT'])]
+public function validateCart(
+    int $id,
+    EntityManagerInterface $entityManager,
+    CartRepository $cartRepository
+): JsonResponse {
+    $cart = $cartRepository->find($id);
+
+    if (!$cart) {
+        return new JsonResponse(['message' => 'Panier introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+    }
+
+    if ($cart->getStatus() === Cart::STATUS_VALIDATED) {
+        return new JsonResponse(['message' => 'Ce panier est déjà validé.'], JsonResponse::HTTP_BAD_REQUEST);
+    }
+
+    // Mettre à jour le statut du panier
+    $cart->setStatus(Cart::STATUS_VALIDATED);
+
+    // Mettre à jour les statuts des produits du panier
+    foreach ($cart->getCartContainers() as $container) {
+        $container->setStatus(CartContainer::STATUS_VALIDATED); // ou la valeur exacte attendue
+    }
+
+    $entityManager->flush();
+
+    return new JsonResponse(['message' => 'Panier validé avec succès.']);
+}
 
 }

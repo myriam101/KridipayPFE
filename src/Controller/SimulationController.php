@@ -12,7 +12,12 @@ use App\Entity\Simulation;
 use App\Entity\Enum\BillCategory;
 use App\Repository\SimulationRepository;
 use App\Repository\ClientRepository;
-
+use App\Repository\EnergyBillRepository;
+use App\Repository\PriceElectricityRepository;
+use App\Repository\PriceWaterRepository;
+use App\Service\Service;
+use App\Service\servicefacture;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Psr\Log\LoggerInterface;
 
@@ -200,8 +205,10 @@ string $periodKey
             // consommation pour 100 cycles → on divise par 100
             $kwh = ($consumptionPerCycle / 100) * $usagePerDay * $periodInDays;
         }
+         // consommation pour 1 cycle
+
         if ($consoLitres !== null) {
-            $litres = ($consoLitres / 100) * $usagePerDay * $periodInDays;
+            $litres = ($consoLitres) * $usagePerDay * $periodInDays;
         }
     }
     
@@ -247,7 +254,7 @@ public function calculateWaterBill(
     ]);
 }
 
-#[Route('/Simulation/add-or-update', name: 'app_simulation_add_or_update', methods: ['POST'])]
+#[Route('/add-or-update', name: 'app_simulation_add_or_update', methods: ['POST'])]
 public function addOrUpdateSimulation(Request $request, EntityManagerInterface $em, SimulationRepository $simulationRepo, ProductRepository $productRepo, ClientRepository $clientRepo): JsonResponse
 {
     $data = json_decode($request->getContent(), true);
@@ -277,9 +284,23 @@ public function addOrUpdateSimulation(Request $request, EntityManagerInterface $
         $existingSimulation->setDurationUse($data['duration_use']);
         $existingSimulation->setNbrUse($data['nbr_use']);
         $existingSimulation->setPeriodeUse($data['periode_use']);
-        $existingSimulation->setDateSimulation(new \DateTime());
 
         $simulation = $existingSimulation;
+        //Appel à la méthode d’estimation
+        $designation = $product->getIdCategory()->getDesignation();
+        $feature = $product->getFeature();
+    
+        $estimated = $this->estimateEnergyConsumptionFromDesignation(
+            $designation,
+            $simulation->getNbrUse(),
+            $simulation->getDurationUse(),
+            $feature->getConsumptionWatt(),
+            $feature->getConsumptionLiter(),
+            $feature->getPower(),
+            $simulation->getPeriodeUse()
+        );
+        $simulation->setResultKhw($estimated['kwh']);
+        $simulation->setResultlt($estimated['litres']);
     } else {
         // Création d'une nouvelle simulation
         $simulation = new Simulation();
@@ -288,7 +309,21 @@ public function addOrUpdateSimulation(Request $request, EntityManagerInterface $
         $simulation->setDurationUse($data['duration_use']);
         $simulation->setNbrUse($data['nbr_use']);
         $simulation->setPeriodeUse($data['periode_use']);
-
+//Appel à la méthode d’estimation
+        $designation = $product->getIdCategory()->getDesignation();
+        $feature = $product->getFeature();
+    
+        $estimated = $this->estimateEnergyConsumptionFromDesignation(
+            $designation,
+            $simulation->getNbrUse(),
+            $simulation->getDurationUse(),
+            $feature->getConsumptionWatt(),
+            $feature->getConsumptionLiter(),
+            $feature->getPower(),
+            $simulation->getPeriodeUse()
+        );
+        $simulation->setResultKhw($estimated['kwh']);
+        $simulation->setResultlt($estimated['litres']);
         $em->persist($simulation);
     }
 
@@ -297,11 +332,92 @@ public function addOrUpdateSimulation(Request $request, EntityManagerInterface $
     // Retourner la simulation (avec ID)
     return new JsonResponse([
         'id' => $simulation->getId(),
-        'estimated_consumption' => [
-            'kwh' => $simulation->getEstimatedKwh(),
-            'litres' => $simulation->getEstimatedLitres()
-        ]
+                    'estimated_consumption' => $estimated // <-- kWh et litres
+
     ], 200);
 }
+#[Route('/bulk', name: 'app_simulation_bulk_only', methods: ['POST'])]
+public function bulkAddOrUpdateSimulationsOnly(
+    Request $request,
+    SimulationRepository $simulationRepo,
+    ProductRepository $productRepo,
+    ClientRepository $clientRepo
+): JsonResponse {
+    $data = json_decode($request->getContent(), true);
+    $clientId = $data['client_id'] ?? null;
+    $simulations = $data['simulations'] ?? [];
+    $periode = $data['periode_use'] ?? null;
+
+    if (!$clientId || empty($simulations) || !$periode) {
+        return new JsonResponse(['message' => 'Données manquantes.'], 400);
+    }
+
+    $client = $clientRepo->find($clientId);
+    if (!$client) {
+        return new JsonResponse(['message' => 'Client introuvable.'], 404);
+    }
+
+    $results = [];
+
+    foreach ($simulations as $simData) {
+        $productId = $simData['product_id'] ?? null;
+        $duration = $simData['duration_use'] ?? null;
+        $nbr = $simData['nbr_use'] ?? null;
+
+        if (!$productId || !$duration || !$nbr) {
+            continue;
+        }
+
+        $product = $productRepo->find($productId);
+        if (!$product) {
+            continue;
+        }
+
+        $simulation = $simulationRepo->findOneBy([
+            'client' => $client,
+            'product' => $product
+        ]) ?? new Simulation();
+
+        $simulation->setIdClient($client);
+        $simulation->setProduct($product);
+        $simulation->setDurationUse($duration);
+        $simulation->setNbrUse($nbr);
+        $simulation->setPeriodeUse($periode);
+
+        // Estimation
+        $feature = $product->getFeature();
+        $designation = $product->getIdCategory()->getDesignation();
+
+        $estimated = $this->estimateEnergyConsumptionFromDesignation(
+            $designation,
+            $nbr,
+            $duration,
+            $feature->getConsumptionWatt(),
+            $feature->getConsumptionLiter(),
+            $feature->getPower(),
+            $periode
+        );
+
+        $simulation->setResultKhw($estimated['kwh']);
+        $simulation->setResultlt($estimated['litres']);
+
+        $this->entityManager->persist($simulation);
+
+        $results[] = [
+            'product_id' => $product->getId(),
+            'simulation_id' => $simulation->getId(),
+            'estimated' => $estimated,
+        ];
+    }
+
+    $this->entityManager->flush();
+
+    return new JsonResponse([
+        'message' => 'Simulations traitées avec succès.',
+        'results' => $results,
+    ]);
+}
+
+
 
 }
